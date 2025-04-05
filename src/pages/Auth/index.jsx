@@ -10,6 +10,7 @@ import {
   Avatar,
   IconButton,
   InputAdornment,
+  Grid,
 } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +20,10 @@ const Auth = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
@@ -45,6 +50,22 @@ const Auth = () => {
     }
 
     if (isSignup) {
+      if (!username.trim()) {
+        tempErrors.username = "Username is required";
+      }
+
+      if (!firstName.trim()) {
+        tempErrors.firstName = "First Name is required";
+      }
+
+      if (!lastName.trim()) {
+        tempErrors.lastName = "Last Name is required";
+      }
+
+      if (!mobile.trim()) {
+        tempErrors.mobile = "Mobile is required";
+      }
+
       if (!confirmPassword) {
         tempErrors.confirmPassword = "Confirm Password is required";
       } else if (password !== confirmPassword) {
@@ -63,6 +84,10 @@ const Auth = () => {
       const formData = new FormData();
       formData.append("email", email);
       formData.append("password", password);
+      formData.append("username", username);
+      formData.append("firstName", firstName);
+      formData.append("lastName", lastName);
+      formData.append("mobile", mobile);
       if (profileImage) {
         formData.append("profilePhoto", profileImage);
       }
@@ -78,6 +103,10 @@ const Auth = () => {
           alert("Signup successful!");
           setIsSignup(false);
           setEmail("");
+          setUsername("");
+          setFirstName("");
+          setLastName("");
+          setMobile("");
           setPassword("");
           setConfirmPassword("");
           setProfileImage(null);
@@ -99,10 +128,12 @@ const Auth = () => {
 
         const data = await res.json();
         if (res.ok) {
+          localStorage.setItem("userId", data.user.userID);
           alert("Login successful!");
           setEmail("");
           setPassword("");
-          navigate("/chat"); // 🔁 Redirect on login success
+
+          navigate("/chat");
         } else {
           alert(data.message || "Login failed.");
         }
@@ -125,7 +156,7 @@ const Auth = () => {
 
   return (
     <Container
-      maxWidth={false}
+      maxWidth="xs"
       sx={{
         display: "flex",
         justifyContent: "center",
@@ -161,7 +192,63 @@ const Auth = () => {
           {isSignup ? "Sign Up" : "Login"}
         </Typography>
 
-        <Box component="form" display="flex" flexDirection="column" gap={2} width="100%">
+        <Box
+          component="form"
+          display="flex"
+          flexDirection="column"
+          gap={2}
+          width="100%"
+        >
+          {isSignup && (
+            <>
+              <TextField
+                label="First Name"
+                variant="outlined"
+                fullWidth
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                error={Boolean(errors.firstName)}
+                helperText={errors.firstName}
+              />
+              <TextField
+                label="Last Name"
+                variant="outlined"
+                fullWidth
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                error={Boolean(errors.lastName)}
+                helperText={errors.lastName}
+              />
+              <TextField
+                label="Mobile"
+                variant="outlined"
+                fullWidth
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                error={Boolean(errors.mobile)}
+                helperText={errors.mobile}
+              />
+              <TextField
+                label="Username"
+                variant="outlined"
+                fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                error={Boolean(errors.username)}
+                helperText={errors.username}
+                InputProps={{
+                  endAdornment: username && (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setUsername("")}>
+                        <Clear />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </>
+          )}
+
           <TextField
             label="Email"
             variant="outlined"
@@ -199,7 +286,7 @@ const Auth = () => {
                     </IconButton>
                   )}
                   <IconButton onClick={() => setShowPassword((prev) => !prev)}>
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -225,13 +312,16 @@ const Auth = () => {
                           <Clear />
                         </IconButton>
                       )}
-                      <IconButton onClick={() => setShowConfirmPassword((prev) => !prev)}>
-                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      <IconButton
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      >
+                        {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
               />
+
               <Button variant="outlined" component="label">
                 Upload Profile Photo (Optional)
                 <input
@@ -241,6 +331,7 @@ const Auth = () => {
                   onChange={handleImageUpload}
                 />
               </Button>
+
               {previewUrl && (
                 <Avatar
                   src={previewUrl}

@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useRef } from 'react';
 import { useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -14,29 +15,43 @@ import {
 } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import SendIcon from "@mui/icons-material/Send";
-import { useState, useRef } from "react";
 import Sidebar from "./Components/sidebar";
+
 const Chat = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [mode, setMode] = useState("light");
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState({});
-  const fileInputRef = useRef();
+  const [members, setMembers] = useState([]);
 
-  const members = [
-    { name: "Alice", avatar: "https://i.pravatar.cc/40?img=1" },
-    { name: "Bob", avatar: "https://i.pravatar.cc/40?img=2" },
-    { name: "Charlie", avatar: "https://i.pravatar.cc/40?img=3" },
-    { name: "David", avatar: "https://i.pravatar.cc/40?img=4" },
-  ];
+  const fileInputRef = useRef();
+  const userId = localStorage.getItem("userId");
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/chat/friends/${userId}`);
+        const data = await res.json();
+        const uniqueFriends = [...new Set(data.friends)];
+        console.log("Unique friends:", uniqueFriends);
+        setMembers(uniqueFriends);
+      } catch (err) {
+        console.error("Failed to load friends:", err);
+      }
+    };
+  
+    if (userId) {
+      fetchFriends();
+    }
+  }, [userId]);
+  
 
   const handleSelectMember = (member) => {
     setSelectedMember(member);
-    if (!messages[member.name]) {
-      setMessages((prev) => ({ ...prev, [member.name]: [] }));
+    if (!messages[member.id]) {
+      setMessages((prev) => ({ ...prev, [member.id]: [] }));
     }
   };
 
@@ -44,8 +59,8 @@ const Chat = () => {
     if (selectedMember && text.trim()) {
       setMessages((prev) => ({
         ...prev,
-        [selectedMember.name]: [
-          ...prev[selectedMember.name],
+        [selectedMember.id]: [
+          ...prev[selectedMember.id],
           { text, sender: "You", isFile },
         ],
       }));
@@ -67,12 +82,13 @@ const Chat = () => {
           <Grid item sm={4} md={3} sx={{ height: "100%", width: "30vw" }}>
             <Sidebar
               members={members}
+              setMembers={setMembers}
               selectedMember={selectedMember}
               onSelect={handleSelectMember}
             />
           </Grid>
         )}
-    
+
         <Grid
           item
           xs={12}
@@ -98,11 +114,10 @@ const Chat = () => {
                   pb: 1,
                 }}
               >
-                <Avatar src={selectedMember.avatar} sx={{ mr: 2 }} />
-                <Typography variant="h6">Chat with {selectedMember.name}</Typography>
+                <Avatar src={selectedMember.ProfilePhoto} sx={{ mr: 2 }} />
+                <Typography variant="h6">Chat with {selectedMember.FirstName} {selectedMember.LastName}</Typography>
               </Box>
-                
-              {/* Chat Messages */}
+
               <Paper
                 sx={{
                   flexGrow: 1,
@@ -114,8 +129,8 @@ const Chat = () => {
                   flexDirection: "column",
                 }}
               >
-                {messages[selectedMember.name]?.length > 0 ? (
-                  messages[selectedMember.name].map((msg, index) => (
+                {messages[selectedMember.id]?.length > 0 ? (
+                  messages[selectedMember.id].map((msg, index) => (
                     <Box
                       key={index}
                       sx={{
@@ -150,7 +165,6 @@ const Chat = () => {
                 )}
               </Paper>
 
-              {/* Message Input + Attach */}
               <Box sx={{ display: "flex", mt: 2 }}>
                 <TextField
                   fullWidth

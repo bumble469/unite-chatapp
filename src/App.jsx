@@ -20,7 +20,6 @@ function App() {
       <CssBaseline />
 
       <Router>
-        {/* Pass mode and setMode to Header for theme toggling */}
         <Header mode={mode} setMode={setMode} />
         <Routes>
           <Route path="/" element={<Home />} />
