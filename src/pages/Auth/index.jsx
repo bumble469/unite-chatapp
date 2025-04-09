@@ -156,12 +156,13 @@ const Auth = () => {
 
   return (
     <Container
-      maxWidth="xs"
+    maxWidth="xs"
       sx={{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "100vh",
+        minHeight: "100vh",
+        p: 2,
       }}
     >
       <Paper
@@ -170,9 +171,11 @@ const Auth = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          p: 4,
+          p: { xs: 2, sm: 4 },
           width: "100%",
           maxWidth: "400px",
+          boxSizing: "border-box",
+          overflowY: "auto",
         }}
       >
         <ToggleButtonGroup

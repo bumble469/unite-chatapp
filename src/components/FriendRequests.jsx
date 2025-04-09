@@ -17,14 +17,22 @@ const modalStyle = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 450,
+  width: {
+    xs: '90vw', // Small screens (mobile)
+    sm: 400,    // Tablets and small laptops
+    md: 450,    // Medium and up
+  },
   maxHeight: '80vh',
   overflowY: 'auto',
   bgcolor: 'background.paper',
   boxShadow: 24,
   borderRadius: 2,
-  p: 3,
+  p: {
+    xs: 2,
+    sm: 3,
+  },
 };
+
 
 const FriendRequests = ({ open, onClose }) => {
   const [requests, setRequests] = useState([]);

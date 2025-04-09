@@ -50,7 +50,7 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
         const mappedUsers = users.map((u) => ({
           id: u.UserID,
           name: u.Username,
-          avatar: u.ProfilePhoto, // Ensure that the avatar is a valid base64 string or URL
+          avatar: u.ProfilePhoto,
         }));
         setSearchResults(mappedUsers);
       } else {
@@ -86,7 +86,6 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
       setToastMsg(response.data.message || `Request sent to ${user.name}`);
       setToastOpen(true);
 
-      // Reset search
       setUsername("");
       setSearchResults([]);
       setShowAddField(false);
@@ -96,23 +95,51 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
       setToastOpen(true);
     }
   };
-
   return (
     <Box
       sx={{
-        height: "100%",
+        height: {
+          xs: "100vh",
+          sm: "auto",
+        },
+        width: {
+          xs: "100vw",
+          sm:"400px"
+        },
         display: "flex",
         flexDirection: "column",
         backgroundColor: theme.palette.background.paper,
         p: 2,
-        borderRight: `1px solid ${theme.palette.divider}`
-      }}
+        borderRadius: {
+          xs: 0,
+          sm: 3,
+        },
+        boxShadow: {
+          xs: "none",
+          sm: "0px 4px 20px rgba(0, 0, 0, 0.2)",
+        },
+        position: {
+          xs: "absolute",
+          sm: "relative",
+        },
+        zIndex: {
+          xs: 1200,
+          sm: "auto",
+        },     
+        mt: {
+          xs: 0,
+          sm: "1.2rem",
+        },
+        mb: {
+          xs: 0,
+          sm: "1.5rem",
+        },
+      }}       
     >
       <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}>
         Chats
       </Typography>
 
-      {/* Connect Button & Add User Section */}
       <Stack spacing={1} sx={{ mb: 2 }}>
         {!showAddField ? (
           <Button variant="contained" size="small" onClick={() => setShowAddField(true)}>
@@ -161,7 +188,6 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
         )}
       </Stack>
 
-      {/* Search bar for filtering friends */}
       <TextField
         variant="outlined"
         size="small"
@@ -171,7 +197,6 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
         sx={{ mb: 2 }}
       />
 
-      {/* Members List */}
       <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
         <List>
           {Array.isArray(members) &&
@@ -201,15 +226,14 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
                 >
                   <Avatar src={member.ProfilePhoto} sx={{ mr: 2 }} />
                   <ListItemText
-                    primary={`${member.FirstName} ${member.LastName}`}  // Primary: FirstName and LastName
-                    secondary={member.Username}  // Secondary: Username
+                    primary={`${member.FirstName} ${member.LastName}`}
+                    secondary={member.Username}
                   />
                 </ListItem>
               ))}
         </List>
       </Box>
 
-      {/* Toast Snackbar */}
       <Snackbar open={toastOpen} autoHideDuration={3000} onClose={() => setToastOpen(false)}>
         <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: "100%" }}>
           {toastMsg}

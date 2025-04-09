@@ -16,14 +16,15 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useLocation, useNavigate } from 'react-router-dom';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'; 
-import ExitToAppIcon from '@mui/icons-material/ExitToApp'; 
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import RequestModal from '../components/FriendRequests';
-import ProfileModal from '../components/ProfileAccount'; // Assuming you have a ProfileModal component
+import ProfileModal from '../components/ProfileAccount';
+
 const Header = ({ mode, setMode }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [openModal, setOpenModal] = useState(false);
-  const [openProfileModal, setOpenProfileModal] = useState(false); 
+  const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,6 +71,16 @@ const Header = ({ mode, setMode }) => {
     setAnchorEl(null);
   };
 
+  const iconScale = {
+    transform: {
+      xs: 'scale(0.87)',
+      sm: 'scale(0.9)',
+      md: 'scale(1)',
+      lg: 'scale(1.05)',
+      xl: 'scale(1.1)',
+    },
+  };  
+
   return (
     <>
       <Box
@@ -85,7 +96,11 @@ const Header = ({ mode, setMode }) => {
       >
         <Tooltip title="Toggle theme">
           <IconButton onClick={toggleTheme} color="inherit">
-            {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+            {mode === 'light' ? (
+              <Brightness4Icon sx={iconScale} />
+            ) : (
+              <Brightness7Icon sx={iconScale} />
+            )}
           </IconButton>
         </Tooltip>
 
@@ -93,13 +108,13 @@ const Header = ({ mode, setMode }) => {
           <>
             <Tooltip title="Notifications">
               <IconButton color="inherit" onClick={handleNotificationsClick}>
-                <NotificationsIcon />
+                <NotificationsIcon sx={iconScale} />
               </IconButton>
             </Tooltip>
 
             <Tooltip title="Settings">
               <IconButton color="inherit" onClick={handleSettingsClick}>
-                <SettingsIcon />
+                <SettingsIcon sx={iconScale} />
               </IconButton>
             </Tooltip>
           </>
@@ -113,17 +128,16 @@ const Header = ({ mode, setMode }) => {
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
           <MenuItem onClick={handleProfileClick}>
-            <AccountCircleIcon sx={{ marginRight: 1 }} />
+            <AccountCircleIcon sx={{ ...iconScale, marginRight: 1 }} />
             Profile & Account
           </MenuItem>
           <MenuItem onClick={handleLogoutClick}>
-            <ExitToAppIcon sx={{ marginRight: 1 }} />
+            <ExitToAppIcon sx={{ ...iconScale, marginRight: 1 }} />
             Logout
           </MenuItem>
         </Menu>
       </Box>
 
-      {/* Logout confirmation dialog */}
       <Dialog
         open={openLogoutDialog}
         onClose={handleLogoutCancel}
@@ -131,9 +145,7 @@ const Header = ({ mode, setMode }) => {
         aria-describedby="logout-dialog-description"
       >
         <DialogTitle id="logout-dialog-title">Confirm Logout</DialogTitle>
-        <DialogContent>
-          Are you sure you want to logout?
-        </DialogContent>
+        <DialogContent>Are you sure you want to logout?</DialogContent>
         <DialogActions>
           <Button onClick={handleLogoutCancel} color="primary">
             Cancel
@@ -143,8 +155,9 @@ const Header = ({ mode, setMode }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      {<RequestModal open={openModal} onClose={handleModalClose} />}
-      {<ProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} />}
+
+      <RequestModal open={openModal} onClose={handleModalClose} />
+      <ProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} />
     </>
   );
 };
