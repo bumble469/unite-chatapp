@@ -12,13 +12,22 @@ import {
   IconButton,
   Snackbar,
   Alert,
-  CircularProgress,
+  CircularProgress
 } from "@mui/material";
 import { Add, Cancel } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
+import io from "socket.io-client";
 
-const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
+let socketRef = null;
+
+const Sidebar = ({
+  members,
+  setMembers,
+  selectedMember,
+  onSelect,
+  setChatId,
+}) => {
   const theme = useTheme();
   const [search, setSearch] = useState("");
   const [username, setUsername] = useState("");
@@ -27,6 +36,33 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Initialize socket connection on component mount
+    if (!socketRef) {
+      const userId = parseInt(localStorage.getItem("userId"), 10);
+      socketRef = io("http://localhost:5000");
+
+      socketRef.on("connect", () => {
+        console.log("Socket connected:", socketRef.id);
+        socketRef.emit("join", userId);
+      });
+
+      socketRef.on("chatCreated", (data) => {
+        const { chatId } = data;
+        console.log("Chat ID received:", chatId);
+        setChatId(chatId);
+      });
+    }
+
+    // Cleanup socket connection when component unmounts
+    return () => {
+      if (socketRef) {
+        socketRef.disconnect();
+        socketRef = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -43,7 +79,9 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
   const handleSearchUser = async (username) => {
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:5000/api/chat/search-user", { username });
+      const response = await axios.post("http://localhost:5000/api/chat/search-user", {
+        username
+      });
       const users = response.data.users;
 
       if (users.length > 0) {
@@ -95,6 +133,20 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
       setToastOpen(true);
     }
   };
+
+  const handleSelectMember = (member) => {
+    onSelect(member);   
+    const userId = parseInt(localStorage.getItem("userId"), 10);
+
+    if (socketRef) {
+      const receiverId = member.UserID;
+      socketRef.emit("startChat", {
+        senderId: userId,
+        receiverId: receiverId,
+      });
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -104,7 +156,7 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
         },
         width: {
           xs: "100vw",
-          sm:"400px"
+          sm: "400px",
         },
         display: "flex",
         flexDirection: "column",
@@ -125,7 +177,7 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
         zIndex: {
           xs: 1200,
           sm: "auto",
-        },     
+        },
         mt: {
           xs: 0,
           sm: "1.2rem",
@@ -134,7 +186,7 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
           xs: 0,
           sm: "1.5rem",
         },
-      }}       
+      }}
     >
       <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}>
         Chats
@@ -207,7 +259,7 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
                   key={index}
                   button
                   selected={selectedMember?.id === member.id}
-                  onClick={() => onSelect(member)}
+                  onClick={() => handleSelectMember(member)}
                   sx={{
                     display: "flex",
                     alignItems: "center",
@@ -242,5 +294,7 @@ const Sidebar = ({ members, setMembers, selectedMember, onSelect }) => {
     </Box>
   );
 };
+
+export const getSocket = () => socketRef;
 
 export default Sidebar;
