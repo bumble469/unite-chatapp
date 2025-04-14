@@ -1,19 +1,13 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Box, Paper, Typography } from "@mui/material";
 
 const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) => {
-  useEffect(() => {
-    if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
-    }
-  }, [messages[selectedMember.id]]); 
-
   return (
     <Paper
       sx={{
         flexGrow: 1,
         p: 2,
-        overflowY: "scroll", 
+        overflowY: "auto",
         backgroundColor: theme.palette.background.paper,
         display: "flex",
         flexDirection: "column",
@@ -26,11 +20,6 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
           display: "flex",
           flexDirection: "column",
           gap: 1,
-          overflowY: "scroll", 
-          overflowX: "hidden", 
-          "&::-webkit-scrollbar": {
-            display: "none", 
-          },
         }}
       >
         {messages[selectedMember.id]?.length > 0 &&
@@ -53,7 +42,6 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
                       borderTop: "1px solid #ccc",
                       borderBottom: "1px solid #ccc",
                       py: 1,
-                      backgroundColor: "#f0f0f0",
                     }}
                   >
                     <Typography variant="caption" sx={{ fontWeight: "bold" }}>
@@ -73,8 +61,6 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
                     maxWidth: "70%",
                     boxShadow: 2,
                     position: "relative",
-                    whiteSpace: "pre-wrap", 
-                    wordBreak: "break-word", 
                     "&::after": {
                       content: '""',
                       position: "absolute",

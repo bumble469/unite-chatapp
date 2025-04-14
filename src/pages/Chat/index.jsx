@@ -76,7 +76,7 @@ const Chat = () => {
           chatId: chatId,
           userId: userId,
         });
-        const data = await res.data; // You can directly access the response data here
+        const data = await res.data;
         const messagesData = data.messages.map((msg) => ({
           text: msg.MessageText,
           sender: msg.SenderID === userId ? "You" : "Other",
@@ -85,13 +85,12 @@ const Chat = () => {
         
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.id]: messagesData, // Store messages for selected member
+          [selectedMember.id]: messagesData,
         }));
       } catch (err) {
         console.error("Failed to load chat history:", err);
       }
     };
-  
     fetchChatHistory();
   }, [chatId]);  
 
@@ -105,7 +104,7 @@ const Chat = () => {
     }
   };  
 
-  const handleSendMessage = (text, isFile = false) => {
+  const handleSendMessage = (text, isFile = false, file = null) => {
     if (selectedMember && text.trim()) {
       const newMessage = {
         text,
@@ -115,21 +114,53 @@ const Chat = () => {
         timestamp: Date.now(),
         chatId: chatId,
       };
-
-      socket.emit("sendMessage", newMessage);
-
-      setMessages((prev) => ({
-        ...prev,
-        [selectedMember.id]: [
-          ...prev[selectedMember.id],
-          { text, sender: "You", isFile },
-        ],
-      }));
-      setMessage("");
+  
+      // If the message is a file, convert the file to Base64 and include it in the message
+      if (isFile && file) {
+        fileToBase64(file).then((base64File) => {
+          newMessage.fileData = base64File; // Add the Base64 string to the message
+  
+          // Send the message through the WebSocket
+          socket.emit("sendMessage", newMessage);
+  
+          // Update the state with the new message
+          setMessages((prev) => ({
+            ...prev,
+            [selectedMember.id]: [
+              ...prev[selectedMember.id],
+              { text: `📎 ${file.name}`, sender: "You", isFile, fileData: base64File },
+            ],
+          }));
+          setMessage(""); // Reset the input field
+        }).catch((error) => {
+          console.error("Error converting file to Base64:", error);
+        });
+      } else {
+        // If it's just a text message, send it directly
+        socket.emit("sendMessage", newMessage);
+  
+        setMessages((prev) => ({
+          ...prev,
+          [selectedMember.id]: [
+            ...prev[selectedMember.id],
+            { text, sender: "You", isFile },
+          ],
+        }));
+        setMessage(""); // Reset the input field
+      }
     }
   };
   
-
+  // Helper function to convert file to Base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = () => resolve(reader.result.split(',')[1]); // Strip off the data URL part
+      reader.onerror = reject;
+    });
+  };  
+  
   useEffect(() => {
     const messageContainer = messageContainerRef.current;
     if (messageContainer) {
@@ -137,13 +168,12 @@ const Chat = () => {
     }
   }, [messages[selectedMember?.id]]);
 
-
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file && selectedMember) {
-      handleSendMessage(`📎 ${file.name}`, true);
+      handleSendMessage(`📎 ${file.name}`, true, file);
     }
-  }; 
+  };  
 
   return (
     <Container maxWidth="xl" disableGutters sx={{ height: "100vh", display: "flex" }}>

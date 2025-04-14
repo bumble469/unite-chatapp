@@ -36,13 +36,13 @@ const Sidebar = ({
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const userId = parseInt(localStorage.getItem("userId"), 10);
 
   useEffect(() => {
-    // Initialize socket connection on component mount
     if (!socketRef) {
-      const userId = parseInt(localStorage.getItem("userId"), 10);
       socketRef = io("http://localhost:5000");
-
+      socketRef.emit('getUnreadCount', { userId: userId });
       socketRef.on("connect", () => {
         console.log("Socket connected:", socketRef.id);
         socketRef.emit("join", userId);
@@ -53,9 +53,19 @@ const Sidebar = ({
         console.log("Chat ID received:", chatId);
         setChatId(chatId);
       });
+      socketRef.on("unreadCount", (data) => {
+        const { userId, unreadCount } = data;
+        console.log("Unread count received:", unreadCount, "for userId:", userId);
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [userId]: unreadCount, 
+        }));
+      });
+      
     }
 
-    // Cleanup socket connection when component unmounts
+    console.log("UnreadCounts:", unreadCounts);
+
     return () => {
       if (socketRef) {
         socketRef.disconnect();
@@ -101,7 +111,6 @@ const Sidebar = ({
       setLoading(false);
     }
   };
-
   const handleAddUser = async (user) => {
     const exists = members.some((m) => m.id === user.id);
     if (exists) {
