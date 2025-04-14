@@ -1,7 +1,9 @@
 import React from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography, IconButton, Tooltip } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 
 const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) => {
+  
   return (
     <Paper
       sx={{
@@ -80,12 +82,60 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
                     },
                   }}
                 >
-                  <Typography
-                    variant="body2"
-                    sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-                  >
-                    {msg.text}
-                  </Typography>
+                  <>
+                  {msg.fileData && msg.fileName ? (
+                     <Typography
+                     variant="body1"
+                     sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+                   >
+                     <span style={{ fontSize: '1.5rem' }}>📂</span>
+                     {msg.text}
+                   </Typography>
+                   
+                    ) : (
+                      <Typography
+                        variant="body1"
+                        sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+                      >
+                        {msg.text}
+                      </Typography>
+                    )}
+                    </>
+                  {(msg.isFile || msg.fileData) && (
+                    <Tooltip title={`🗂️ Download ${msg.text || "Attachment"}`}>
+                    <IconButton
+                      onClick={() => {
+                        const link = document.createElement("a");
+                  
+                        if (msg.isFile && msg.fileData) {
+                          const fileBlob = new Blob([new Uint8Array(msg.fileData?.data || msg.fileData)]);
+                          const fileType = fileBlob.type || "application/octet-stream";
+                  
+                          const fileExtension = fileType.split("/")[1] || "bin";
+                          const finalFileName = msg.text || `download.${fileExtension}`;
+                          link.href = msg.fileData; 
+                          link.download = finalFileName;
+                        }
+                  
+                        // For older messages (with base64 content)
+                        else if (msg.fileData && msg.fileName) {
+                          const fileExtension = msg.fileName.split(".").pop();
+                          const finalFileName = msg.fileName || `download.${fileExtension}`;
+                  
+                          link.href = `data:${msg.fileType || "application/octet-stream"};base64,${msg.fileData}`;
+                          link.download = finalFileName;
+                        }
+                  
+                        link.click();
+                      }}
+                      size="small"
+                      sx={{ mt: 1 }}
+                    >
+                      <DownloadIcon fontSize="medium" />
+                    </IconButton>
+                  </Tooltip>                  
+                  )}
+
                   <Typography variant="caption">
                     {msg.timestamp ? msg.timestamp.substring(11, 19) : ""}
                   </Typography>

@@ -25,30 +25,7 @@ const Chat = () => {
   const [messages, setMessages] = useState({});
   const [members, setMembers] = useState([]);
   const userId = parseInt(localStorage.getItem("userId"), 10);
-  const messageContainerRef = useRef(null);
-  
-  useEffect(() => {
-    if (!socket) return;
-    socket.on("receiveMessage", (msg) => {
-      console.log("Received message:", msg);
-      const { senderId, text, isFile, chatId: newChatId } = msg;
-      if (selectedMember?.id === senderId || chatId === newChatId) {
-        setMessages((prevMessages) => {
-          const updatedMessages = {
-            ...prevMessages, 
-            [selectedMember.id]: [
-              ...(prevMessages[selectedMember.id] || []),
-              { text, sender: "Other", isFile },
-            ],
-          };
-          return updatedMessages;
-        });
-      }
-    });
-    return () => {
-      socket.off("receiveMessage");
-    };
-  }, [socket, selectedMember?.id, chatId]);
+  const messageContainerRef = useRef(null);   
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -69,20 +46,27 @@ const Chat = () => {
   }, [userId]);
 
   useEffect(() => {
-    if (!selectedMember || !chatId) return;
+    if (!selectedMember || !chatId) return; 
+
     const fetchChatHistory = async () => {
       try {
         const res = await axios.post(`http://localhost:5000/api/chat/chat-history`, {
           chatId: chatId,
           userId: userId,
         });
-        const data = await res.data;
+
+        const data = res.data;
+
         const messagesData = data.messages.map((msg) => ({
           text: msg.MessageText,
           sender: msg.SenderID === userId ? "You" : "Other",
           timestamp: msg.SentAt,
+          hasAttachment: !!msg.fileData,
+          fileData: msg.fileData,
+          fileType: msg.fileType,
+          fileName: msg.fileName,
         }));
-        
+
         setMessages((prev) => ({
           ...prev,
           [selectedMember.id]: messagesData,
@@ -91,19 +75,20 @@ const Chat = () => {
         console.error("Failed to load chat history:", err);
       }
     };
+
     fetchChatHistory();
-  }, [chatId]);  
+  }, [selectedMember, chatId, userId]);  
 
   const handleSelectMember = (member) => {
-    setSelectedMember(member);
+    setSelectedMember(member);  
     if (!messages[member.id]) {
       setMessages((prev) => ({
         ...prev,
         [member.id]: [],
       }));
     }
-  };  
-
+  };
+  
   const handleSendMessage = (text, isFile = false, file = null) => {
     if (selectedMember && text.trim()) {
       const newMessage = {
@@ -114,31 +99,30 @@ const Chat = () => {
         timestamp: Date.now(),
         chatId: chatId,
       };
-  
-      // If the message is a file, convert the file to Base64 and include it in the message
+
       if (isFile && file) {
-        fileToBase64(file).then((base64File) => {
-          newMessage.fileData = base64File; // Add the Base64 string to the message
-  
-          // Send the message through the WebSocket
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const fileData = reader.result;
+
+          newMessage.fileData = fileData;
+
           socket.emit("sendMessage", newMessage);
-  
-          // Update the state with the new message
+
           setMessages((prev) => ({
             ...prev,
             [selectedMember.id]: [
               ...prev[selectedMember.id],
-              { text: `📎 ${file.name}`, sender: "You", isFile, fileData: base64File },
+              { text: `${file.name}`, sender: "You", isFile, fileData: fileData },
             ],
           }));
           setMessage(""); // Reset the input field
-        }).catch((error) => {
-          console.error("Error converting file to Base64:", error);
-        });
+        };
+
+        reader.readAsArrayBuffer(file);
       } else {
-        // If it's just a text message, send it directly
         socket.emit("sendMessage", newMessage);
-  
+
         setMessages((prev) => ({
           ...prev,
           [selectedMember.id]: [
@@ -150,31 +134,111 @@ const Chat = () => {
       }
     }
   };
-  
-  // Helper function to convert file to Base64
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = () => resolve(reader.result.split(',')[1]); // Strip off the data URL part
-      reader.onerror = reject;
-    });
-  };  
-  
+
   useEffect(() => {
-    const messageContainer = messageContainerRef.current;
-    if (messageContainer) {
-      messageContainer.scrollTop = messageContainer.scrollHeight;
-    }
-  }, [messages[selectedMember?.id]]);
+    if (!socket) return;
+  
+    socket.on("receiveMessage", (msg) => {
+      console.log("Received message:", msg);
+  
+      const {
+        senderId,
+        text,
+        isFile,
+        fileData,   
+        chatId: newChatId,
+      } = msg;
+  
+      if (isFile && fileData) {
+        const base64Data = fileData;
+  
+        setMessages((prevMessages) => {
+          const updatedMessages = {
+            ...prevMessages,
+            [selectedMember.id]: [
+              ...(prevMessages[selectedMember.id] || []),
+              {
+                text,
+                sender: "Other",
+                isFile: true,
+                fileData: base64Data,
+                fileName: text || "download.bin",
+              },
+            ],
+          };
+          return updatedMessages;
+        });
+      } else {
+        if (selectedMember?.id === senderId || chatId === newChatId) {
+          setMessages((prevMessages) => {
+            const updatedMessages = {
+              ...prevMessages,
+              [selectedMember.id]: [
+                ...(prevMessages[selectedMember.id] || []),
+                { text, sender: "Other", isFile: false },
+              ],
+            };
+            return updatedMessages;
+          });
+        }
+      }
+    });
+  
+    return () => {
+      socket.off("receiveMessage");
+    };
+  }, [socket, selectedMember?.UserID, chatId]);    
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
+  
     if (file && selectedMember) {
-      handleSendMessage(`📎 ${file.name}`, true, file);
+      const fileType = file.type;
+  
+      // Supported file types
+      const supportedVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
+      const supportedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml'];
+      const supportedDocumentTypes = [
+        'application/msword',       // .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/vnd.ms-excel',  // .xls
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/pdf'           // .pdf
+      ];
+      const supportedZipTypes = ['application/zip', 'application/x-rar-compressed'];
+  
+      // Check for video files
+      if (supportedVideoTypes.includes(fileType)) {
+        const fileUrl = URL.createObjectURL(file); // Video preview URL
+        handleSendMessage(`${file.name} (Video)`, true, file, fileUrl);
+  
+      // Check for image files
+      } else if (supportedImageTypes.includes(fileType)) {
+        const fileUrl = URL.createObjectURL(file); // Image preview URL
+        handleSendMessage(`${file.name} (Image)`, true, file, fileUrl);
+  
+      // Check for document files
+      } else if (supportedDocumentTypes.includes(fileType)) {
+        handleSendMessage(`${file.name} (Document)`, true, file);
+  
+      // Check for zip files
+      } else if (supportedZipTypes.includes(fileType)) {
+        handleSendMessage(`${file.name} (Zip File)`, true, file);
+  
+      } else {
+        console.error("Unsupported file type.");
+      }
     }
-  };  
-
+  };
+  
+  
+  useEffect(() => {
+    const lastMessage = messageContainerRef.current?.lastElementChild;
+    if (lastMessage) {
+      lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [messages, selectedMember]);
+  
   return (
     <Container maxWidth="xl" disableGutters sx={{ height: "100vh", display: "flex" }}>
       <Grid container sx={{ height: "100vh", flexWrap: "nowrap" }}>
