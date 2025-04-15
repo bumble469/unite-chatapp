@@ -17,7 +17,7 @@ import { useState } from "react";
 import { Visibility, VisibilityOff, Clear } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
-require('dotenv').config();
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");

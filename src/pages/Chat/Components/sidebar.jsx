@@ -20,7 +20,6 @@ import axios from "axios";
 import io from "socket.io-client";
 import unitelogonobg from '../../../assets/images/unite-logo-nobg.png'
 let socketRef = null;
-require('dotenv').config();
 
 const Sidebar = ({
   members,

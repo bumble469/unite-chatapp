@@ -15,7 +15,7 @@ import axios from "axios";
 import ChatMessages from "./Components/chatmessages";
 import ChatHeader from './Components/chatheader';
 import ChatInput from './Components/chatinput';
-require("dotenv").config();
+
 const Chat = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
