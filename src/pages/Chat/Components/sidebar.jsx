@@ -20,6 +20,7 @@ import axios from "axios";
 import io from "socket.io-client";
 import unitelogonobg from '../../../assets/images/unite-logo-nobg.png'
 let socketRef = null;
+require('dotenv').config();
 
 const Sidebar = ({
   members,
@@ -41,7 +42,7 @@ const Sidebar = ({
 
   useEffect(() => {
     if (!socketRef) {
-      socketRef = io("http://localhost:5000");
+      socketRef = io(`${API_URL}`);
 
       socketRef.on("connect", () => {
         console.log("Socket connected:", socketRef.id);
@@ -111,7 +112,7 @@ const Sidebar = ({
   const handleSearchUser = async (username) => {
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:5000/api/chat/search-user", {
+      const response = await axios.post(`${API_URL}/api/chat/search-user`, {
         username
       });
       const users = response.data.users;
@@ -146,7 +147,7 @@ const Sidebar = ({
       const senderId = parseInt(localStorage.getItem("userId"), 10);
       const receiverId = user.id;
 
-      const response = await axios.post("http://localhost:5000/api/chat/send-request", {
+      const response = await axios.post(`${API_URL}/api/chat/send-request`, {
         senderId,
         receiverId,
       });

@@ -17,7 +17,7 @@ import { useState } from "react";
 import { Visibility, VisibilityOff, Clear } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
-
+require('dotenv').config();
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -36,6 +36,8 @@ const Auth = () => {
   const [otp, setOtp] = useState("");
   const [tempUserId, setTempUserId] = useState();
   const navigate = useNavigate();
+  const API_URL = process.env.API_URL;
+
   const openOtpModal = () => {
     setOtpModalOpen(true);
   };
@@ -104,7 +106,7 @@ const Auth = () => {
       }
   
       try {
-        const res = await fetch("http://localhost:5000/api/auth/signup", {
+        const res = await fetch(`${API_URL}/api/auth/signup`, {
           method: "POST",
           body: formData,
         });
@@ -131,12 +133,12 @@ const Auth = () => {
       }
     } else {
       try {
-        const res = await axios.post("http://localhost:5000/api/auth/login", {
+        const res = await axios.post(`${API_URL}/api/auth/login`, {
           email,
           password,
         });
         if (res.status === 200) {
-          const otpRes = await axios.post("http://localhost:5000/api/auth/generate-otp", {
+          const otpRes = await axios.post(`${API_URL}/api/auth/generate-otp`, {
             email,
           });
           setTempUserId(res.data.user.userID)
@@ -158,7 +160,7 @@ const Auth = () => {
 
   const handleOtpVerify = async () => {
     try {
-      const res = await axios.post(`http://localhost:5000/api/auth/verify-otp`, {
+      const res = await axios.post(`${API_URL}/api/auth/verify-otp`, {
         otp,
         email
       });

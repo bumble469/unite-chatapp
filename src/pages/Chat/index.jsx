@@ -15,6 +15,7 @@ import axios from "axios";
 import ChatMessages from "./Components/chatmessages";
 import ChatHeader from './Components/chatheader';
 import ChatInput from './Components/chatinput';
+require("dotenv").config();
 const Chat = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -26,11 +27,12 @@ const Chat = () => {
   const [members, setMembers] = useState([]);
   const userId = parseInt(localStorage.getItem("userId"), 10);
   const messageContainerRef = useRef(null);   
+  const API_URL = process.env.API_URL
 
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const res = await axios.post(`http://localhost:5000/api/chat/friends`, {
+        const res = await axios.post(`${API_URL}/api/chat/friends`, {
           userId: userId
         });
         const data = res.data;
@@ -52,7 +54,7 @@ const Chat = () => {
 
     const fetchChatHistory = async () => {
       try {
-        const res = await axios.post(`http://localhost:5000/api/chat/chat-history`, {
+        const res = await axios.post(`${API_URL}/api/chat/chat-history`, {
           chatId: chatId,
           userId: userId,
         });
