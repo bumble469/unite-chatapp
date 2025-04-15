@@ -15,7 +15,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import RequestModal from '../components/FriendRequests';
@@ -27,7 +27,6 @@ const Header = ({ mode, setMode }) => {
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
@@ -59,7 +58,7 @@ const Header = ({ mode, setMode }) => {
   const handleLogoutConfirm = () => {
     localStorage.removeItem('userId');
     setOpenLogoutDialog(false);
-    navigate('/auth');
+    window.location.href = '/auth';
   };
 
   const handleLogoutCancel = () => {

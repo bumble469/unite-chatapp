@@ -33,7 +33,6 @@ const modalStyle = {
   },
 };
 
-
 const FriendRequests = ({ open, onClose }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,13 +92,14 @@ const FriendRequests = ({ open, onClose }) => {
                   >
                     Accept
                   </Button>
+                  {/* Ignore Button */}
                   <Button
                     variant="outlined"
                     size="small"
-                    color="error"
-                    onClick={() => handleAction(req.RequestID, 'rejected')}
+                    color="default"
+                    onClick={() => handleAction(req.RequestID, 'ignored')}
                   >
-                    Reject
+                    Ignore
                   </Button>
                 </Stack>
               </ListItem>

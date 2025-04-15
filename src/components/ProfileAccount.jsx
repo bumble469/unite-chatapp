@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Modal, Button, TextField, Stack, Avatar, CircularProgress } from '@mui/material';
-import axios from 'axios'; // Ensure you have axios installed for API requests
-
+import axios from 'axios';
+import { toast } from 'react-toastify';
 const modalStyle = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 500, // Set width to be a bit wider
+  width: 500,
   maxWidth: '90%',
-  maxHeight: '80vh', // Ensure modal stays within page height
-  overflowY: 'auto', // Scrollable if content overflows
+  maxHeight: '80vh',
+  overflowY: 'auto',
   bgcolor: 'background.paper',
   boxShadow: 24,
   p: 4,
@@ -23,11 +23,12 @@ const ProfileAccount = ({ open, onClose }) => {
     firstName: '',
     lastName: '',
     phoneNumber: '',
-    profilePhoto: '', // To store the base64 image
+    profilePhoto: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [newProfilePhoto, setNewProfilePhoto] = useState(null);
 
   const userId = localStorage.getItem('userId');
 
@@ -35,15 +36,15 @@ const ProfileAccount = ({ open, onClose }) => {
     if (userId) {
       setLoading(true);
       axios
-        .post('http://localhost:5000/api/user/profile/details', { userId }) // API POST request to get user details
+        .post('http://localhost:5000/api/user/profile/details', { userId })
         .then((response) => {
           setUserDetails({
             username: response.data.user.Username,
             email: response.data.user.Email,
-            firstName: response.data.user.FirstName || '', // Assuming FirstName might be null
-            lastName: response.data.user.LastName || '', // Assuming LastName might be null
-            phoneNumber: response.data.user.Mobile || '', // Assuming PhoneNumber might be null
-            profilePhoto: response.data.user.ProfilePhoto || '', // Assuming ProfilePhoto might be null
+            firstName: response.data.user.FirstName || '',
+            lastName: response.data.user.LastName || '',
+            phoneNumber: response.data.user.Mobile || '',
+            profilePhoto: response.data.user.ProfilePhoto || '',
           });
           setLoading(false);
         })
@@ -62,10 +63,57 @@ const ProfileAccount = ({ open, onClose }) => {
     }));
   };
 
-  const handleSaveChanges = () => {
-    // Add logic to save changes to the API (PATCH or PUT request)
-    console.log('Saving changes:', userDetails);
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewProfilePhoto(reader.result); 
+      };
+      reader.readAsDataURL(file); 
+    }
   };
+
+  const handleSaveChanges = () => {
+      if (!userId) return;
+    
+      const cleanedProfilePhoto = newProfilePhoto
+        ? newProfilePhoto.split(',')[1]
+        : userDetails.profilePhoto.split(',')[1];
+    
+      const payload = {
+        userId,
+        username: userDetails.username,
+        email: userDetails.email,
+        firstName: userDetails.firstName,
+        lastName: userDetails.lastName,
+        phoneNumber: userDetails.phoneNumber,
+        profilePhoto: cleanedProfilePhoto,
+      };
+    
+      setLoading(true);
+      axios.post('http://localhost:5000/api/user/profile/update', payload).then(() => {
+          setLoading(false);
+          toast.success('Profile updated successfully!');
+          axios.post('http://localhost:5000/api/user/profile/details', { userId }).then((response) => {
+            setUserDetails({
+              username: response.data.user.Username,
+              email: response.data.user.Email,
+              firstName: response.data.user.FirstName || '',
+              lastName: response.data.user.LastName || '',
+              phoneNumber: response.data.user.Mobile || '',
+              profilePhoto: response.data.user.ProfilePhoto || '',
+            });
+          });
+      })
+      .catch((err) => {
+        setError('Failed to update user profile');
+        toast.error('Failed to update profile');
+        setLoading(false);
+      });
+  };
+  
+
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -84,19 +132,29 @@ const ProfileAccount = ({ open, onClose }) => {
           </Typography>
         ) : (
           <Stack spacing={2} alignItems="center">
-            {/* Profile Photo - Circle */}
             <Avatar
               alt="Profile Photo"
-              src={userDetails.profilePhoto}
+              src={newProfilePhoto || userDetails.profilePhoto}
               sx={{
                 width: 100,
                 height: 100,
                 marginBottom: 2,
-                border: '2px solid #3f51b5', // Optional: add border for better visibility
+                border: '2px solid #3f51b5',
               }}
             />
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="upload-photo"
+              type="file"
+              onChange={handlePhotoChange}
+            />
+            <label htmlFor="upload-photo">
+              <Button variant="contained" component="span" color="primary" sx={{ marginTop: 2 }}>
+                Change Profile Photo
+              </Button>
+            </label>
 
-            {/* User Details */}
             <TextField
               label="Username"
               variant="outlined"

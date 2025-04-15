@@ -30,11 +30,13 @@ const Chat = () => {
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/chat/friends/${userId}`);
-        const data = await res.json();
+        const res = await axios.post(`http://localhost:5000/api/chat/friends`, {
+          userId: userId
+        });
+        const data = res.data;
         const uniqueFriends = [...new Set(data.friends)];
         console.log("Unique friends:", uniqueFriends);
-        setMembers(uniqueFriends);
+        setMembers(uniqueFriends);        
       } catch (err) {
         console.error("Failed to load friends:", err);
       }
@@ -54,9 +56,7 @@ const Chat = () => {
           chatId: chatId,
           userId: userId,
         });
-
         const data = res.data;
-
         const messagesData = data.messages.map((msg) => ({
           text: msg.MessageText,
           sender: msg.SenderID === userId ? "You" : "Other",
@@ -69,7 +69,7 @@ const Chat = () => {
 
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.id]: messagesData,
+          [selectedMember.UserID]: messagesData,
         }));
       } catch (err) {
         console.error("Failed to load chat history:", err);
@@ -77,7 +77,7 @@ const Chat = () => {
     };
 
     fetchChatHistory();
-  }, [selectedMember, chatId, userId]);  
+  }, [chatId, userId]);  
 
   const handleSelectMember = (member) => {
     setSelectedMember(member);  
@@ -87,6 +87,10 @@ const Chat = () => {
         [member.id]: [],
       }));
     }
+    socket.emit('markMessagesAsRead', {
+      senderId: member.UserID, 
+      receiverId: userId,  
+    });
   };
   
   const handleSendMessage = (text, isFile = false, file = null) => {
@@ -111,12 +115,12 @@ const Chat = () => {
 
           setMessages((prev) => ({
             ...prev,
-            [selectedMember.id]: [
-              ...prev[selectedMember.id],
+            [selectedMember.UserID]: [
+              ...prev[selectedMember.UserID],
               { text: `${file.name}`, sender: "You", isFile, fileData: fileData },
             ],
           }));
-          setMessage(""); // Reset the input field
+          setMessage("");
         };
 
         reader.readAsArrayBuffer(file);
@@ -125,12 +129,12 @@ const Chat = () => {
 
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.id]: [
-            ...prev[selectedMember.id],
+          [selectedMember.UserID]: [
+            ...prev[selectedMember.UserID],
             { text, sender: "You", isFile },
           ],
         }));
-        setMessage(""); // Reset the input field
+        setMessage("");
       }
     }
   };
@@ -155,8 +159,8 @@ const Chat = () => {
         setMessages((prevMessages) => {
           const updatedMessages = {
             ...prevMessages,
-            [selectedMember.id]: [
-              ...(prevMessages[selectedMember.id] || []),
+            [selectedMember.UserID]: [
+              ...(prevMessages[selectedMember.UserID] || []),
               {
                 text,
                 sender: "Other",
@@ -173,8 +177,8 @@ const Chat = () => {
           setMessages((prevMessages) => {
             const updatedMessages = {
               ...prevMessages,
-              [selectedMember.id]: [
-                ...(prevMessages[selectedMember.id] || []),
+              [selectedMember.UserID]: [
+                ...(prevMessages[selectedMember.UserID] || []),
                 { text, sender: "Other", isFile: false },
               ],
             };

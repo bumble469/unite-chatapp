@@ -3,7 +3,7 @@ import { Box, Paper, Typography, IconButton, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 
 const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) => {
-  
+  console.log("Messgaes: ",messages)
   return (
     <Paper
       sx={{
@@ -24,12 +24,12 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
           gap: 1,
         }}
       >
-        {messages[selectedMember.id]?.length > 0 &&
-          messages[selectedMember.id].map((msg, index) => {
+        {messages[selectedMember.UserID]?.length > 0 &&
+          messages[selectedMember.UserID].map((msg, index) => {
             const currentDate = msg.timestamp?.substring(0, 10);
             const previousDate =
               index > 0
-                ? messages[selectedMember.id][index - 1].timestamp?.substring(0, 10)
+                ? messages[selectedMember.UserID][index - 1].timestamp?.substring(0, 10)
                 : null;
 
             return (

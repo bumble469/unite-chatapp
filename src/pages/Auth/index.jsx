@@ -10,15 +10,15 @@ import {
   Avatar,
   IconButton,
   InputAdornment,
-  Grid,
+  Modal
 } from "@mui/material";
+import axios from 'axios';
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff, Clear } from "@mui/icons-material";
+import { toast } from "react-toastify";
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
-  const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -32,6 +32,17 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isOtpModalOpen, setOtpModalOpen] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [tempUserId, setTempUserId] = useState();
+  const navigate = useNavigate();
+  const openOtpModal = () => {
+    setOtpModalOpen(true);
+  };
+
+  const closeOtpModal = () => {
+    setOtpModalOpen(false);
+  };
 
   const validate = () => {
     const tempErrors = {};
@@ -79,7 +90,7 @@ const Auth = () => {
 
   const handleAuth = async () => {
     if (!validate()) return;
-
+  
     if (isSignup) {
       const formData = new FormData();
       formData.append("email", email);
@@ -91,13 +102,13 @@ const Auth = () => {
       if (profileImage) {
         formData.append("profilePhoto", profileImage);
       }
-
+  
       try {
         const res = await fetch("http://localhost:5000/api/auth/signup", {
           method: "POST",
           body: formData,
         });
-
+  
         const data = await res.json();
         if (res.ok) {
           alert("Signup successful!");
@@ -120,30 +131,59 @@ const Auth = () => {
       }
     } else {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+        const res = await axios.post("http://localhost:5000/api/auth/login", {
+          email,
+          password,
         });
-
-        const data = await res.json();
-        if (res.ok) {
-          localStorage.setItem("userId", data.user.userID);
-          alert("Login successful!");
-          setEmail("");
-          setPassword("");
-
-          navigate("/chat");
+        if (res.status === 200) {
+          const otpRes = await axios.post("http://localhost:5000/api/auth/generate-otp", {
+            email,
+          });
+          setTempUserId(res.data.user.userID)
+          openOtpModal();
+          toast.info("Check your email for OTP!")
         } else {
-          alert(data.message || "Login failed.");
+          alert(res.data.message || "Login failed.");
         }
       } catch (err) {
-        console.error("Login error:", err);
-        alert("Something went wrong during login.");
+        console.error("Login error:", err.response ? err.response.data : err.message);
+        if (err.response && err.response.data) {
+          toast.error("Some Problem: " + err.response.data.message || "Unknown error occurred");
+        } else {
+          toast.error("Some Problem: " + err.message || "Unknown error occurred");
+        }
+      }      
+    }
+  };  
+
+  const handleOtpVerify = async () => {
+    try {
+      const res = await axios.post(`http://localhost:5000/api/auth/verify-otp`, {
+        otp,
+        email
+      });
+  
+      if (res.status === 200) {
+        toast.success("OTP Verified")
+        closeOtpModal();
+        setOtp("");
+        localStorage.setItem("userId", tempUserId);
+        setEmail("");
+        setPassword("");
+        navigate('/chat')
+      } else {
+        toast.error("Invalid OTP.");
+        setTempUserId(null)
+      }
+    } catch (err) {
+      if (err.response && err.response.data) {
+        toast.error("Some Problem: " + err.response.data.message || "Unknown error occurred");
+      } else {
+        toast.error("Some Problem: " + err.message || "Unknown error occurred");
       }
     }
   };
-
+  
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -156,7 +196,7 @@ const Auth = () => {
 
   return (
     <Container
-    maxWidth="xs"
+      maxWidth="xs"
       sx={{
         display: "flex",
         justifyContent: "center",
@@ -350,6 +390,45 @@ const Auth = () => {
           </Button>
         </Box>
       </Paper>
+      {isOtpModalOpen && (
+        <Modal
+          open={isOtpModalOpen}
+          onClose={closeOtpModal}
+          aria-labelledby="otp-modal-title"
+          aria-describedby="otp-modal-description"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 300,
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Typography id="otp-modal-title" variant="h6" component="h2">
+              Enter OTP
+            </Typography>
+            <TextField
+              fullWidth
+              label="OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+            />
+            <Button variant="contained" color="primary" onClick={handleOtpVerify}>
+              Verify OTP
+            </Button>
+          </Box>
+        </Modal>
+      )}
     </Container>
   );
 };

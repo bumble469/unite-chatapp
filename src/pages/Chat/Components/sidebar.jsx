@@ -18,7 +18,7 @@ import { Add, Cancel } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import io from "socket.io-client";
-
+import unitelogonobg from '../../../assets/images/unite-logo-nobg.png'
 let socketRef = null;
 
 const Sidebar = ({
@@ -36,16 +36,25 @@ const Sidebar = ({
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [unreadCounts, setUnreadCounts] = useState({});
   const userId = parseInt(localStorage.getItem("userId"), 10);
+  const [unreadCounts, setUnreadCounts] = useState({});
 
   useEffect(() => {
     if (!socketRef) {
       socketRef = io("http://localhost:5000");
-      socketRef.emit('getUnreadCount', { userId: userId });
+
       socketRef.on("connect", () => {
         console.log("Socket connected:", socketRef.id);
         socketRef.emit("join", userId);
+      });
+
+      socketRef.on("newMessage", (data) => {
+        if (data.receiverId === userId) {
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [data.senderId]: (prev[data.senderId] || 0) + 1,
+          }));
+        }
       });
 
       socketRef.on("chatCreated", (data) => {
@@ -53,18 +62,7 @@ const Sidebar = ({
         console.log("Chat ID received:", chatId);
         setChatId(chatId);
       });
-      socketRef.on("unreadCount", (data) => {
-        const { userId, unreadCount } = data;
-        console.log("Unread count received:", unreadCount, "for userId:", userId);
-        setUnreadCounts((prev) => ({
-          ...prev,
-          [userId]: unreadCount, 
-        }));
-      });
-      
     }
-
-    console.log("UnreadCounts:", unreadCounts);
 
     return () => {
       if (socketRef) {
@@ -73,6 +71,30 @@ const Sidebar = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (members && members.length > 0) {
+      const friendIds = members.map(member => member.UserID);
+      socketRef.emit("getUnreadCounts", { 
+        userId, 
+        friendIds
+      });
+
+      socketRef.on("unreadCounts", (data) => {
+        const unreadCounts = data;
+        for (const [senderId, unreadCount] of Object.entries(unreadCounts)) {
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [senderId]: unreadCount,
+          }));
+        }
+      });
+
+      return () => {
+        socketRef.off("unreadCounts");
+      };
+    }
+  }, [members]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -111,6 +133,7 @@ const Sidebar = ({
       setLoading(false);
     }
   };
+
   const handleAddUser = async (user) => {
     const exists = members.some((m) => m.id === user.id);
     if (exists) {
@@ -170,7 +193,6 @@ const Sidebar = ({
         display: "flex",
         flexDirection: "column",
         backgroundColor: theme.palette.background.paper,
-        p: 2,
         borderRadius: {
           xs: 0,
           sm: 3,
@@ -197,11 +219,25 @@ const Sidebar = ({
         },
       }}
     >
-      <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}>
-        Chats
+      <Typography 
+        variant="h6" 
+        gutterBottom 
+        sx={{ 
+          color: theme.palette.text.primary, 
+          display: 'flex', 
+          alignItems: 'center',
+        }}
+      >
+        <img 
+          src={unitelogonobg} 
+          alt="U" 
+          height={30} 
+          style={{ marginRight:-20,marginTop: 4, height:'4rem'}}
+        />
+        nite
       </Typography>
 
-      <Stack spacing={1} sx={{ mb: 2 }}>
+      <Stack spacing={1} sx={{ mb: 2,px:2 }}>
         {!showAddField ? (
           <Button variant="contained" size="small" onClick={() => setShowAddField(true)}>
             Connect
@@ -255,10 +291,10 @@ const Sidebar = ({
         placeholder="Search members..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, px:2 }}
       />
 
-      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+      <Box sx={{ flexGrow: 1, overflowY: "auto", px:2 }}>
         <List>
           {Array.isArray(members) &&
             members
@@ -286,10 +322,52 @@ const Sidebar = ({
                   }}
                 >
                   <Avatar src={member.ProfilePhoto} sx={{ mr: 2 }} />
-                  <ListItemText
-                    primary={`${member.FirstName} ${member.LastName}`}
-                    secondary={member.Username}
-                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="body1" fontWeight="500">
+                        {member.FirstName} {member.LastName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {member.Username}
+                      </Typography>
+                    </Box>
+
+                    {unreadCounts[member.UserID] > 0 && (
+                      <Box
+                        sx={{
+                          backgroundColor: "#CD5C5C",
+                          color: "white",
+                          borderRadius: "12px",
+                          px: 1,
+                          minWidth: 22,
+                          height: 22,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                          fontWeight: 400,
+                          boxShadow: 1,
+                          animation: "bounce 0.4s ease",
+                          '@keyframes bounce': {
+                            '0%': { transform: 'scale(0.8)' },
+                            '50%': { transform: 'scale(1.1)' },
+                            '100%': { transform: 'scale(1)' },
+                          },
+                        }}
+                      >
+                        {unreadCounts[member.UserID] > 4 ? "4+" : unreadCounts[member.UserID]}
+                      </Box>
+                    )}
+
+                  </Box>
+
                 </ListItem>
               ))}
         </List>
