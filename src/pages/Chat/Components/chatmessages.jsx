@@ -27,15 +27,32 @@ const ChatMessages = ({
         flexDirection: "column",
         backgroundImage:
           theme.palette.mode === "dark"
-            ? `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${bgimagedark})`
+            ? `linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.6)), url(${bgimagedark})`
             : `url(${bgimage})`,
         backgroundRepeat: "repeat",
         backgroundSize: "contain",
         backgroundColor:
           theme.palette.mode === "dark"
-            ? "rgba(39, 38, 38, 0.92)"
-            : "rgba(255, 255, 255, 0.94)",
+            ? "rgba(49, 49, 49, 0.9)"
+            : "rgba(255, 255, 255, 0.97)",
         backgroundBlendMode: "overlay",
+
+        "&::-webkit-scrollbar": {
+          width: "10px", 
+        },
+        "&::-webkit-scrollbar-track": {
+          background: theme.palette.mode === "dark" ? "#333" : "#f0f0f0", 
+          borderRadius: "10px",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          background: theme.palette.mode === "dark" ? "rgb(207, 207, 207)" : "rgb(125, 125, 125)", 
+          borderRadius: "10px",
+          border: "2px solid transparent", 
+          backgroundClip: "content-box",
+        },
+        "&::-webkit-scrollbar-thumb:hover": {
+          background: theme.palette.mode === "dark" ? "#2a8c8d" : "#0056b3", 
+        },
       }}
     >
       <Box
@@ -99,11 +116,11 @@ const ChatMessages = ({
                     alignSelf: msg.sender === "You" ? "flex-end" : "flex-start",
                     background:
                       msg.sender === "You"
-                        ? "linear-gradient(135deg,rgb(104, 183, 229) 0%,rgb(45, 140, 199) 100%)"
-                        : "linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)",
+                        ? "linear-gradient(135deg,rgb(144, 206, 241) 0%,rgb(85, 184, 245) 100%)"
+                        : "linear-gradient(135deg,rgb(214, 211, 211) 0%, #f5f5f5 100%)",
                     color: "#000",
-                    px: 2,
-                    py: 1.5,
+                    px: 1.3,
+                    py: 1,
                     borderRadius: 4,
                     maxWidth: "70%",
                     boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
@@ -118,12 +135,12 @@ const ChatMessages = ({
                       border: "8px solid transparent",
                       ...(msg.sender === "You"
                         ? {
-                            right: -16,
-                            borderLeftColor: "#4DA0B0",
+                            right: -14,
+                            borderLeftColor: "rgb(85, 184, 245)",
                           }
                         : {
-                            left: -16,
-                            borderRightColor: "#e0e0e0",
+                            left: -14,
+                            borderRightColor: "rgb(214, 211, 211)",
                           }),
                     },
                   }}
@@ -196,7 +213,12 @@ const ChatMessages = ({
                       fontSize: "0.75rem",
                     }}
                   >
-                    {msg.timestamp ? msg.timestamp.substring(11, 19) : ""}
+                    {msg.timestamp
+                    ? new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    : ""}
                   </Typography>
                 </Box>
               </React.Fragment>

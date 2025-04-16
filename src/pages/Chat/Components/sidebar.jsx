@@ -144,7 +144,6 @@ const Sidebar = ({
       setToastOpen(true);
       return;
     }
-
     try {
       const senderId = parseInt(localStorage.getItem("userId"), 10);
       const receiverId = user.id;
@@ -318,7 +317,6 @@ const Sidebar = ({
                 .map((member, index) => (
                   <ListItem
                     key={index}
-                    button
                     selected={selectedMember?.userid === member.userid}
                     onClick={() => handleSelectMember(member)}
                     sx={{
@@ -326,10 +324,7 @@ const Sidebar = ({
                       alignItems: "center",
                       borderRadius: 2,
                       mb: 1,
-                      backgroundColor:
-                        selectedMember?.id === member.id
-                          ? theme.palette.action.selected
-                          : "transparent",
+                      backgroundColor: theme.palette.mode === "dark" ? "rgb(46, 46, 46)" : "rgb(235, 235, 235)",
                       color: theme.palette.text.primary,
                       "&:hover": {
                         backgroundColor: theme.palette.action.hover,

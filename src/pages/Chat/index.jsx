@@ -15,7 +15,7 @@ import axios from "axios";
 import ChatMessages from "./Components/chatmessages";
 import ChatHeader from './Components/chatheader';
 import ChatInput from './Components/chatinput';
-
+import talkinggif from "../../assets/images/talkgif.gif"
 const Chat = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -259,7 +259,6 @@ const Chat = () => {
     <Container maxWidth="xl" disableGutters sx={{ height: "100vh", display: "flex" }}>
       <Grid container sx={{ height: "100vh", flexWrap: "nowrap" }}>
         <Grid
-          item
           sx={{
             display: "flex",
             position: isMobile ? "fixed" : "relative",
@@ -300,7 +299,6 @@ const Chat = () => {
 
         {(!isMobile || (isMobile && selectedMember)) && (
           <Grid
-            item
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -358,7 +356,17 @@ const Chat = () => {
             ) : (
               !isMobile && (
                 <Typography variant="h6" sx={{ textAlign: "center", mt: "40vh" }}>
-                  Select a member to start chatting
+                  Select a member to start chatting&nbsp;
+                  <img
+                    src={talkinggif}
+                    alt="chatting"
+                    style={{
+                      verticalAlign: "middle",
+                      width: "4rem",
+                      height: "4rem",
+                      backgroundColor: "transparent",
+                    }}
+                  />
                 </Typography>
               )
             )}
