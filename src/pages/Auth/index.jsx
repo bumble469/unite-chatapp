@@ -106,34 +106,37 @@ const Auth = () => {
       if (profileImage) {
         formData.append("profilePhoto", profileImage);
       }
-      setLoading(true);
+  
       try {
+        setLoading(true);
         const res = await fetch(`${apiUrl}/api/auth/signup`, {
           method: "POST",
           body: formData,
         });
   
         const data = await res.json();
+  
         if (res.ok) {
-          alert("Signup successful!");
-          setIsSignup(false);
-          setEmail("");
-          setUsername("");
-          setFirstName("");
-          setLastName("");
-          setMobile("");
-          setPassword("");
-          setConfirmPassword("");
-          setProfileImage(null);
-          setPreviewUrl(null);
-          setLoading(false);
+          const otpRes = await axios.post(`${apiUrl}/api/auth/generate-otp`, {
+            email,
+          });
+  
+          if (otpRes.status === 200) {
+            setTempUserId(data.userID); // assuming `data.userID` is returned
+            openOtpModal();
+            toast.info("Check your email for OTP to complete registration!");
+          } else {
+            toast.error("Failed to send OTP.");
+          }
         } else {
-          alert(data.message || "Signup failed.");
-          setLoading(false);
+          toast.error(data.message || "Signup failed.");
         }
+  
+        setLoading(false);
       } catch (err) {
         console.error("Signup error:", err);
-        alert("Something went wrong during signup.");
+        setLoading(false);
+        toast.error("Something went wrong during signup.");
       }
     } else {
       try {
@@ -142,56 +145,64 @@ const Auth = () => {
           email,
           password,
         });
+  
         if (res.status === 200) {
-          const otpRes = await axios.post(`${apiUrl}/api/auth/generate-otp`, {
-            email,
-          });
-          setLoading(false);
-          setTempUserId(res.data.user.userID)
-          openOtpModal();
-          toast.info("Check your email for OTP!")
+          localStorage.setItem("userId", res.data.user.userID);
+          setEmail("");
+          setPassword("");
+          navigate("/chat");
+          toast.success("Login successful!");
         } else {
-          alert(res.data.message || "Login failed.");
-          setLoading(false);
+          toast.error(res.data.message || "Login failed.");
         }
+  
+        setLoading(false);
       } catch (err) {
+        setLoading(false);
         console.error("Login error:", err.response ? err.response.data : err.message);
-        if (err.response && err.response.data) {
-          toast.error("Some Problem: " + err.response.data.message || "Unknown error occurred");
-        } else {
-          toast.error("Some Problem: " + err.message || "Unknown error occurred");
-        }
-      }      
+        toast.error(
+          err.response?.data?.message || err.message || "Unknown error occurred"
+        );
+      }
     }
-  };  
-
+  };
+  
   const handleOtpVerify = async () => {
     try {
       setLoading(true);
       const res = await axios.post(`${apiUrl}/api/auth/verify-otp`, {
         otp,
-        email
+        email,
       });
+  
       if (res.status === 200) {
-        setLoading(false);
-        toast.success("OTP Verified")
-        closeOtpModal();
-        setOtp("");
+        toast.success("OTP Verified! Signup completed.");
         localStorage.setItem("userId", tempUserId);
+        closeOtpModal();
+  
+        setOtp("");
+        setIsSignup(false);
         setEmail("");
+        setUsername("");
+        setFirstName("");
+        setLastName("");
+        setMobile("");
         setPassword("");
-        navigate('/chat')
+        setConfirmPassword("");
+        setProfileImage(null);
+        setPreviewUrl(null);
+        setTempUserId(null);
+  
+        setIsSignup(!isSignup);
       } else {
-        setLoading(false);
         toast.error("Invalid OTP.");
-        setTempUserId(null)
       }
+      setLoading(false);
     } catch (err) {
-      if (err.response && err.response.data) {
-        toast.error("Some Problem: " + err.response.data.message || "Unknown error occurred");
-      } else {
-        toast.error("Some Problem: " + err.message || "Unknown error occurred");
-      }
+      setLoading(false);
+      toast.error(
+        err.response?.data?.message || err.message || "OTP Verification Failed"
+      );
     }
   };
   
@@ -437,6 +448,7 @@ const Auth = () => {
               label="OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
+              autoFocus
             />
             <Button variant="contained" color="primary" onClick={handleOtpVerify}>
               Verify OTP
