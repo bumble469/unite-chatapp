@@ -26,14 +26,14 @@ const Chat = () => {
   const [messages, setMessages] = useState({});
   const [members, setMembers] = useState([]);
   const userId = parseInt(localStorage.getItem("userId"), 10);
-  const messageContainerRef = useRef(null);   
-  const API_URL = process.env.API_URL
-
+  const messageContainerRef = useRef(null); 
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const res = await axios.post(`${API_URL}/api/chat/friends`, {
-          userId: userId
+        const res = await axios.post(`${apiUrl}/api/chat/friends`, {
+          userid: userId
         });
         const data = res.data;
         const uniqueFriends = [...new Set(data.friends)];
@@ -54,28 +54,38 @@ const Chat = () => {
 
     const fetchChatHistory = async () => {
       try {
-        const res = await axios.post(`${API_URL}/api/chat/chat-history`, {
+        const res = await axios.post(`${apiUrl}/api/chat/chat-history`, {
           chatId: chatId,
           userId: userId,
         });
+      
         const data = res.data;
-        const messagesData = data.messages.map((msg) => ({
-          text: msg.MessageText,
-          sender: msg.SenderID === userId ? "You" : "Other",
-          timestamp: msg.SentAt,
-          hasAttachment: !!msg.fileData,
-          fileData: msg.fileData,
-          fileType: msg.fileType,
-          fileName: msg.fileName,
-        }));
-
+      
+        const messagesData = data.messages.map((msg) => {
+          const hasAttachment = !!msg.filedata;
+          const fileData = hasAttachment ? msg.filedata : null;
+          const fileType = hasAttachment ? msg.filetype : null;
+          const fileName = hasAttachment ? msg.filename : null;
+      
+          return {
+            text: msg.messagetext,
+            sender: msg.senderid === userId ? "You" : "Other",
+            timestamp: msg.sentat,
+            hasattachment: hasAttachment,
+            filedata: fileData,
+            filetype: fileType,
+            filename: fileName,
+          };
+        });
+      
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.UserID]: messagesData,
+          [selectedMember.userid]: messagesData,
         }));
+      
       } catch (err) {
         console.error("Failed to load chat history:", err);
-      }
+      }      
     };
 
     fetchChatHistory();
@@ -90,7 +100,7 @@ const Chat = () => {
       }));
     }
     socket.emit('markMessagesAsRead', {
-      senderId: member.UserID, 
+      senderId: member.userid, 
       receiverId: userId,  
     });
   };
@@ -100,7 +110,7 @@ const Chat = () => {
       const newMessage = {
         text,
         senderId: userId,
-        receiverId: selectedMember.UserID,
+        receiverId: selectedMember.userid,
         isFile,
         timestamp: Date.now(),
         chatId: chatId,
@@ -117,9 +127,9 @@ const Chat = () => {
 
           setMessages((prev) => ({
             ...prev,
-            [selectedMember.UserID]: [
-              ...prev[selectedMember.UserID],
-              { text: `${file.name}`, sender: "You", isFile, fileData: fileData },
+            [selectedMember.userid]: [
+              ...prev[selectedMember.userid],
+              { text: `${file.name}`, sender: "You", isFile, filedata: fileData },
             ],
           }));
           setMessage("");
@@ -131,8 +141,8 @@ const Chat = () => {
 
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.UserID]: [
-            ...prev[selectedMember.UserID],
+          [selectedMember.userid]: [
+            ...prev[selectedMember.userid],
             { text, sender: "You", isFile },
           ],
         }));
@@ -161,8 +171,8 @@ const Chat = () => {
         setMessages((prevMessages) => {
           const updatedMessages = {
             ...prevMessages,
-            [selectedMember.UserID]: [
-              ...(prevMessages[selectedMember.UserID] || []),
+            [selectedMember.userid]: [
+              ...(prevMessages[selectedMember.userid] || []),
               {
                 text,
                 sender: "Other",
@@ -179,8 +189,8 @@ const Chat = () => {
           setMessages((prevMessages) => {
             const updatedMessages = {
               ...prevMessages,
-              [selectedMember.UserID]: [
-                ...(prevMessages[selectedMember.UserID] || []),
+              [selectedMember.userid]: [
+                ...(prevMessages[selectedMember.userid] || []),
                 { text, sender: "Other", isFile: false },
               ],
             };
@@ -193,7 +203,7 @@ const Chat = () => {
     return () => {
       socket.off("receiveMessage");
     };
-  }, [socket, selectedMember?.UserID, chatId]);    
+  }, [socket, selectedMember?.userid, chatId]);    
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

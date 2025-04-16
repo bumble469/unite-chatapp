@@ -24,9 +24,9 @@ const ChatHeader = ({ selectedMember, theme }) => {
           transformOrigin: "left center",
         }}
       >
-        <Avatar src={selectedMember.ProfilePhoto} sx={{ mr: 2 }} />
+        <Avatar src={selectedMember.profilephoto} sx={{ mr: 2 }} />
         <Typography variant="h6" sx={{ maxWidth: { xs: "fit-content", sm: "200px" } }}>
-          {selectedMember.FirstName} {selectedMember.LastName}
+          {selectedMember.firstname} {selectedMember.lastname}
         </Typography>
       </Box>
     </Box>

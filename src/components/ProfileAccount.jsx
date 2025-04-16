@@ -18,38 +18,41 @@ const modalStyle = {
 
 const ProfileAccount = ({ open, onClose }) => {
   const [userDetails, setUserDetails] = useState({
+    userid: '',
     username: '',
     email: '',
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    profilePhoto: '',
-  });
+    firstname: '',
+    lastname: '',
+    phonenumber: '',
+    profilephoto: '',
+  });  
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [newProfilePhoto, setNewProfilePhoto] = useState(null);
 
   const userId = localStorage.getItem('userId');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (userId) {
       setLoading(true);
       axios
-        .post('http://localhost:5000/api/user/profile/details', { userId })
+        .post(`${apiUrl}/api/user/profile/details`, { userid:userId })
         .then((response) => {
           setUserDetails({
-            username: response.data.user.Username,
-            email: response.data.user.Email,
-            firstName: response.data.user.FirstName || '',
-            lastName: response.data.user.LastName || '',
-            phoneNumber: response.data.user.Mobile || '',
-            profilePhoto: response.data.user.ProfilePhoto || '',
-          });
+            userid: response.data.user.userid,
+            username: response.data.user.username,
+            email: response.data.user.email,
+            firstname: response.data.user.firstname || '',
+            lastname: response.data.user.lastname || '',
+            phonenumber: response.data.user.mobile || '',
+            profilephoto: response.data.user.profilephoto || '',
+          });          
           setLoading(false);
         })
         .catch((err) => {
-          setError('Failed to fetch user details');
+          setError('Failed to fetch user details', err);
           setLoading(false);
         });
     }
@@ -79,31 +82,33 @@ const ProfileAccount = ({ open, onClose }) => {
     
       const cleanedProfilePhoto = newProfilePhoto
         ? newProfilePhoto.split(',')[1]
-        : userDetails.profilePhoto.split(',')[1];
+        : userDetails.profilephoto?.split(',')[1];
+
     
-      const payload = {
-        userId,
-        username: userDetails.username,
-        email: userDetails.email,
-        firstName: userDetails.firstName,
-        lastName: userDetails.lastName,
-        phoneNumber: userDetails.phoneNumber,
-        profilePhoto: cleanedProfilePhoto,
-      };
+        const payload = {
+          userid: userDetails.userid,
+          username: userDetails.username,
+          email: userDetails.email,
+          firstname: userDetails.firstname,
+          lastname: userDetails.lastname,
+          profilephoto: cleanedProfilePhoto,
+          phonenumber: userDetails.phonenumber,
+        };        
     
       setLoading(true);
-      axios.post('http://localhost:5000/api/user/profile/update', payload).then(() => {
+      axios.post(`${apiUrl}/api/user/profile/update`, payload).then(() => {
           setLoading(false);
           toast.success('Profile updated successfully!');
-          axios.post('http://localhost:5000/api/user/profile/details', { userId }).then((response) => {
+          axios.post(`${apiUrl}/api/user/profile/details`, { userId }).then((response) => {
             setUserDetails({
-              username: response.data.user.Username,
-              email: response.data.user.Email,
-              firstName: response.data.user.FirstName || '',
-              lastName: response.data.user.LastName || '',
-              phoneNumber: response.data.user.Mobile || '',
-              profilePhoto: response.data.user.ProfilePhoto || '',
-            });
+              userid: response.data.user.userid,
+              username: response.data.user.username,
+              email: response.data.user.email,
+              firstname: response.data.user.firstname || '',
+              lastname: response.data.user.lastname || '',
+              phonenumber: response.data.user.mobile || '',
+              profilephoto: response.data.user.profilephoto || '',
+            });    
           });
       })
       .catch((err) => {
@@ -134,7 +139,7 @@ const ProfileAccount = ({ open, onClose }) => {
           <Stack spacing={2} alignItems="center">
             <Avatar
               alt="Profile Photo"
-              src={newProfilePhoto || userDetails.profilePhoto}
+              src={newProfilePhoto || userDetails.profilephoto}
               sx={{
                 width: 100,
                 height: 100,
@@ -175,25 +180,25 @@ const ProfileAccount = ({ open, onClose }) => {
               label="First Name"
               variant="outlined"
               fullWidth
-              value={userDetails.firstName}
+              value={userDetails.firstname}
               onChange={handleInputChange}
-              name="firstName"
+              name="firstname"
             />
             <TextField
               label="Last Name"
               variant="outlined"
               fullWidth
-              value={userDetails.lastName}
+              value={userDetails.lastname}
               onChange={handleInputChange}
-              name="lastName"
+              name="lastname"
             />
             <TextField
               label="Phone Number"
               variant="outlined"
               fullWidth
-              value={userDetails.phoneNumber}
+              value={userDetails.phonenumber}
               onChange={handleInputChange}
-              name="phoneNumber"
+              name="phonenumber"
             />
 
             <Button variant="contained" color="primary" onClick={handleSaveChanges} sx={{ marginTop: 2 }}>

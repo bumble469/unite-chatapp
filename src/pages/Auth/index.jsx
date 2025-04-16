@@ -10,7 +10,8 @@ import {
   Avatar,
   IconButton,
   InputAdornment,
-  Modal
+  Modal,
+  CircularProgress
 } from "@mui/material";
 import axios from 'axios';
 import { useState } from "react";
@@ -36,7 +37,8 @@ const Auth = () => {
   const [otp, setOtp] = useState("");
   const [tempUserId, setTempUserId] = useState();
   const navigate = useNavigate();
-  const API_URL = process.env.API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const [loading, setLoading] = useState(false);
 
   const openOtpModal = () => {
     setOtpModalOpen(true);
@@ -104,9 +106,9 @@ const Auth = () => {
       if (profileImage) {
         formData.append("profilePhoto", profileImage);
       }
-  
+      setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/auth/signup`, {
+        const res = await fetch(`${apiUrl}/api/auth/signup`, {
           method: "POST",
           body: formData,
         });
@@ -124,8 +126,10 @@ const Auth = () => {
           setConfirmPassword("");
           setProfileImage(null);
           setPreviewUrl(null);
+          setLoading(false);
         } else {
           alert(data.message || "Signup failed.");
+          setLoading(false);
         }
       } catch (err) {
         console.error("Signup error:", err);
@@ -133,19 +137,22 @@ const Auth = () => {
       }
     } else {
       try {
-        const res = await axios.post(`${API_URL}/api/auth/login`, {
+        setLoading(true);
+        const res = await axios.post(`${apiUrl}/api/auth/login`, {
           email,
           password,
         });
         if (res.status === 200) {
-          const otpRes = await axios.post(`${API_URL}/api/auth/generate-otp`, {
+          const otpRes = await axios.post(`${apiUrl}/api/auth/generate-otp`, {
             email,
           });
+          setLoading(false);
           setTempUserId(res.data.user.userID)
           openOtpModal();
           toast.info("Check your email for OTP!")
         } else {
           alert(res.data.message || "Login failed.");
+          setLoading(false);
         }
       } catch (err) {
         console.error("Login error:", err.response ? err.response.data : err.message);
@@ -160,12 +167,13 @@ const Auth = () => {
 
   const handleOtpVerify = async () => {
     try {
-      const res = await axios.post(`${API_URL}/api/auth/verify-otp`, {
+      setLoading(true);
+      const res = await axios.post(`${apiUrl}/api/auth/verify-otp`, {
         otp,
         email
       });
-  
       if (res.status === 200) {
+        setLoading(false);
         toast.success("OTP Verified")
         closeOtpModal();
         setOtp("");
@@ -174,6 +182,7 @@ const Auth = () => {
         setPassword("");
         navigate('/chat')
       } else {
+        setLoading(false);
         toast.error("Invalid OTP.");
         setTempUserId(null)
       }
@@ -243,7 +252,11 @@ const Auth = () => {
           flexDirection="column"
           gap={2}
           width="100%"
-        >
+        >{loading && (
+          <Box mt={2} display="flex" justifyContent="center">
+            <CircularProgress />
+          </Box>
+          )}
           {isSignup && (
             <>
               <TextField

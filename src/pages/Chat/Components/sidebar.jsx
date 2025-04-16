@@ -38,10 +38,11 @@ const Sidebar = ({
   const [loading, setLoading] = useState(false);
   const userId = parseInt(localStorage.getItem("userId"), 10);
   const [unreadCounts, setUnreadCounts] = useState({});
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!socketRef) {
-      socketRef = io(`${API_URL}`);
+      socketRef = io(`${apiUrl}`);
 
       socketRef.on("connect", () => {
         console.log("Socket connected:", socketRef.id);
@@ -74,7 +75,7 @@ const Sidebar = ({
 
   useEffect(() => {
     if (members && members.length > 0) {
-      const friendIds = members.map(member => member.UserID);
+      const friendIds = members.map(member => member.userid);
       socketRef.emit("getUnreadCounts", { 
         userId, 
         friendIds
@@ -111,16 +112,16 @@ const Sidebar = ({
   const handleSearchUser = async (username) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/api/chat/search-user`, {
+      const response = await axios.post(`${apiUrl}/api/chat/search-user`, {
         username
       });
       const users = response.data.users;
-
+      console.log("users: ", users)
       if (users.length > 0) {
         const mappedUsers = users.map((u) => ({
-          id: u.UserID,
-          name: u.Username,
-          avatar: u.ProfilePhoto,
+          id: u.userid,
+          name: u.username,
+          avatar: u.profilephoto,
         }));
         setSearchResults(mappedUsers);
       } else {
@@ -146,7 +147,7 @@ const Sidebar = ({
       const senderId = parseInt(localStorage.getItem("userId"), 10);
       const receiverId = user.id;
 
-      const response = await axios.post(`${API_URL}/api/chat/send-request`, {
+      const response = await axios.post(`${apiUrl}/api/chat/send-request`, {
         senderId,
         receiverId,
       });
@@ -171,7 +172,7 @@ const Sidebar = ({
     const userId = parseInt(localStorage.getItem("userId"), 10);
 
     if (socketRef) {
-      const receiverId = member.UserID;
+      const receiverId = member.userid;
       socketRef.emit("startChat", {
         senderId: userId,
         receiverId: receiverId,
@@ -298,7 +299,7 @@ const Sidebar = ({
         <List>
           {Array.isArray(members) &&
             members
-              .filter((member) => (member.Username || "").toLowerCase().includes(search.toLowerCase()))
+              .filter((member) => (member.username || "").toLowerCase().includes(search.toLowerCase()))
               .map((member, index) => (
                 <ListItem
                   key={index}
@@ -321,7 +322,7 @@ const Sidebar = ({
                     transition: "background-color 0.3s",
                   }}
                 >
-                  <Avatar src={member.ProfilePhoto} sx={{ mr: 2 }} />
+                  <Avatar src={member.profilephoto} sx={{ mr: 2 }} />
                   <Box
                     sx={{
                       display: "flex",
@@ -332,14 +333,14 @@ const Sidebar = ({
                   >
                     <Box>
                       <Typography variant="body1" fontWeight="500">
-                        {member.FirstName} {member.LastName}
+                        {member.firstname} {member.lastname}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {member.Username}
+                        {member.username}
                       </Typography>
                     </Box>
 
-                    {unreadCounts[member.UserID] > 0 && (
+                    {unreadCounts[member.userid] > 0 && (
                       <Box
                         sx={{
                           backgroundColor: "#CD5C5C",
@@ -362,7 +363,7 @@ const Sidebar = ({
                           },
                         }}
                       >
-                        {unreadCounts[member.UserID] > 4 ? "4+" : unreadCounts[member.UserID]}
+                        {unreadCounts[member.userid] > 4 ? "4+" : unreadCounts[member.userid]}
                       </Box>
                     )}
 

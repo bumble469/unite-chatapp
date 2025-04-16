@@ -36,13 +36,13 @@ const modalStyle = {
 const FriendRequests = ({ open, onClose }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const userId = localStorage.getItem('userId');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/chat/requests/pending/${userId}`);
+        const res = await axios.get(`${apiUrl}/api/chat/requests/pending/${userId}`);
         console.log("Fetched requests:", res.data);
 
         setRequests(res.data.pendingRequests || []);
@@ -59,8 +59,8 @@ const FriendRequests = ({ open, onClose }) => {
 
   const handleAction = async (requestId, status) => {
     try {
-      await axios.put(`http://localhost:5000/api/chat/requests/update/${requestId}`, { status });
-      setRequests((prev) => prev.filter((r) => r.RequestID !== requestId));
+      await axios.put(`${apiUrl}/api/chat/requests/update/${requestId}`, { status });
+      setRequests((prev) => prev.filter((r) => r.requestid !== requestId));
     } catch (err) {
       console.error(`Error updating request ${requestId}:`, err.message);
     }
@@ -78,17 +78,17 @@ const FriendRequests = ({ open, onClose }) => {
         ) : (
           <List>
             {requests.map((req) => (
-              <ListItem key={req.RequestID} divider>
+              <ListItem key={req.requestid} divider>
                 <ListItemText
-                  primary={req.Username || 'Unknown'}
-                  secondary={`ID: ${req.SenderID}`}
+                  primary={req.username || 'Unknown'}
+                  secondary={`ID: ${req.senderid}`}
                 />
                 <Stack direction="row" spacing={1}>
                   <Button
                     variant="contained"
                     size="small"
                     color="success"
-                    onClick={() => handleAction(req.RequestID, 'accepted')}
+                    onClick={() => handleAction(req.requestid, 'accepted')}
                   >
                     Accept
                   </Button>
@@ -97,7 +97,7 @@ const FriendRequests = ({ open, onClose }) => {
                     variant="outlined"
                     size="small"
                     color="default"
-                    onClick={() => handleAction(req.RequestID, 'ignored')}
+                    onClick={() => handleAction(req.requestid, 'ignored')}
                   >
                     Ignore
                   </Button>

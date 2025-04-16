@@ -3,7 +3,6 @@ import { Box, Paper, Typography, IconButton, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 
 const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) => {
-  console.log("Messgaes: ",messages)
   return (
     <Paper
       sx={{
@@ -24,12 +23,12 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
           gap: 1,
         }}
       >
-        {messages[selectedMember.UserID]?.length > 0 &&
-          messages[selectedMember.UserID].map((msg, index) => {
+        {messages[selectedMember.userid]?.length > 0 &&
+          messages[selectedMember.userid].map((msg, index) => {
             const currentDate = msg.timestamp?.substring(0, 10);
             const previousDate =
               index > 0
-                ? messages[selectedMember.UserID][index - 1].timestamp?.substring(0, 10)
+                ? messages[selectedMember.userid][index - 1].timestamp?.substring(0, 10)
                 : null;
 
             return (
@@ -82,60 +81,61 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
                     },
                   }}
                 >
-                  <>
+                  {/* Render message text */}
                   {msg.fileData && msg.fileName ? (
-                     <Typography
-                     variant="body1"
-                     sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-                   >
-                     <span style={{ fontSize: '1.5rem' }}>📂</span>
-                     {msg.text}
-                   </Typography>
-                   
-                    ) : (
-                      <Typography
-                        variant="body1"
-                        sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-                      >
-                        {msg.text}
-                      </Typography>
-                    )}
-                    </>
-                  {(msg.isFile || msg.fileData) && (
-                    <Tooltip title={`🗂️ Download ${msg.text || "Attachment"}`}>
-                    <IconButton
-                      onClick={() => {
-                        const link = document.createElement("a");
-                  
-                        if (msg.isFile && msg.fileData) {
-                          const fileBlob = new Blob([new Uint8Array(msg.fileData?.data || msg.fileData)]);
-                          const fileType = fileBlob.type || "application/octet-stream";
-                  
-                          const fileExtension = fileType.split("/")[1] || "bin";
-                          const finalFileName = msg.text || `download.${fileExtension}`;
-                          link.href = msg.fileData; 
-                          link.download = finalFileName;
-                        }
-                  
-                        // For older messages (with base64 content)
-                        else if (msg.fileData && msg.fileName) {
-                          const fileExtension = msg.fileName.split(".").pop();
-                          const finalFileName = msg.fileName || `download.${fileExtension}`;
-                  
-                          link.href = `data:${msg.fileType || "application/octet-stream"};base64,${msg.fileData}`;
-                          link.download = finalFileName;
-                        }
-                  
-                        link.click();
-                      }}
-                      size="small"
-                      sx={{ mt: 1 }}
+                    <Typography
+                      variant="body1"
+                      sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
                     >
-                      <DownloadIcon fontSize="medium" />
-                    </IconButton>
-                  </Tooltip>                  
+                      <span style={{ fontSize: "1.5rem" }}>📂</span>
+                      {msg.text}
+                    </Typography>
+                  ) : (
+                    <Typography
+                      variant="body1"
+                      sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+                    >
+                      {msg.text}
+                    </Typography>
                   )}
 
+                  {/* Render download button if there's a file */}
+                  {(msg.isFile || msg.fileData) && (
+                    <Tooltip title={`🗂️ Download ${msg.text || "Attachment"}`}>
+                      <IconButton
+                        onClick={() => {
+                          const link = document.createElement("a");
+
+                          if (msg.isFile && msg.fileData) {
+                            const fileBlob = new Blob([new Uint8Array(msg.fileData?.data || msg.fileData)]);
+                            const fileType = fileBlob.type || "application/octet-stream";
+
+                            const fileExtension = fileType.split("/")[1] || "bin";
+                            const finalFileName = msg.text || `download.${fileExtension}`;
+                            link.href = msg.fileData;
+                            link.download = finalFileName;
+                          }
+
+                          // For older messages (with base64 content)
+                          else if (msg.fileData && msg.fileName) {
+                            const fileExtension = msg.fileName.split(".").pop();
+                            const finalFileName = msg.fileName || `download.${fileExtension}`;
+
+                            link.href = `data:${msg.fileType || "application/octet-stream"};base64,${msg.fileData}`;
+                            link.download = finalFileName;
+                          }
+
+                          link.click();
+                        }}
+                        size="small"
+                        sx={{ mt: 1 }}
+                      >
+                        <DownloadIcon fontSize="medium" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {/* Render timestamp */}
                   <Typography variant="caption">
                     {msg.timestamp ? msg.timestamp.substring(11, 19) : ""}
                   </Typography>
