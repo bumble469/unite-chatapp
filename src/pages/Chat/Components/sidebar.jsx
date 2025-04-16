@@ -12,7 +12,8 @@ import {
   IconButton,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Dialog, DialogActions, DialogContent, DialogTitle,
 } from "@mui/material";
 import { Add, Cancel } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
@@ -39,6 +40,8 @@ const Sidebar = ({
   const userId = parseInt(localStorage.getItem("userId"), 10);
   const [unreadCounts, setUnreadCounts] = useState({});
   const apiUrl = import.meta.env.VITE_API_URL;
+  const [openPhotoModal, setOpenPhotoModal] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState("");
 
   useEffect(() => {
     if (!socketRef) {
@@ -127,12 +130,11 @@ const Sidebar = ({
       } else {
         setSearchResults([]);
       }
+      setLoading(false)
     } catch (err) {
       console.error("Search Error:", err.message);
       setSearchResults([]);
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const handleAddUser = async (user) => {
@@ -178,6 +180,16 @@ const Sidebar = ({
         receiverId: receiverId,
       });
     }
+  };
+
+  const handleOpenPhotoModal = (photoUrl) => {
+    setSelectedPhoto(photoUrl);
+    setOpenPhotoModal(true);
+  };
+
+  const handleClosePhotoModal = () => {
+    setOpenPhotoModal(false);
+    setSelectedPhoto("");
   };
 
   return (
@@ -237,7 +249,7 @@ const Sidebar = ({
         />
         nite
       </Typography>
-
+  
       <Stack spacing={1} sx={{ mb: 2,px:2 }}>
         {!showAddField ? (
           <Button variant="contained" size="small" onClick={() => setShowAddField(true)}>
@@ -285,7 +297,7 @@ const Sidebar = ({
           </>
         )}
       </Stack>
-
+  
       <TextField
         variant="outlined"
         size="small"
@@ -294,91 +306,115 @@ const Sidebar = ({
         onChange={(e) => setSearch(e.target.value)}
         sx={{ mb: 2, px:2 }}
       />
-
+  
       <Box sx={{ flexGrow: 1, overflowY: "auto", px:2 }}>
-        <List>
-          {Array.isArray(members) &&
-            members
-              .filter((member) => (member.username || "").toLowerCase().includes(search.toLowerCase()))
-              .map((member, index) => (
-                <ListItem
-                  key={index}
-                  button
-                  selected={selectedMember?.id === member.id}
-                  onClick={() => handleSelectMember(member)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: 2,
-                    mb: 1,
-                    backgroundColor:
-                      selectedMember?.id === member.id
-                        ? theme.palette.action.selected
-                        : "transparent",
-                    color: theme.palette.text.primary,
-                    "&:hover": {
-                      backgroundColor: theme.palette.action.hover,
-                    },
-                    transition: "background-color 0.3s",
-                  }}
-                >
-                  <Avatar src={member.profilephoto} sx={{ mr: 2 }} />
-                  <Box
+        {members.length === 0 ? (
+          <CircularProgress size={40} sx={{ mt: 4, mx: "auto", display: "block" }} />
+        ) : (
+          <List>
+            {Array.isArray(members) &&
+              members
+                .filter((member) => (member.username || "").toLowerCase().includes(search.toLowerCase()))
+                .map((member, index) => (
+                  <ListItem
+                    key={index}
+                    button
+                    selected={selectedMember?.userid === member.userid}
+                    onClick={() => handleSelectMember(member)}
                     sx={{
                       display: "flex",
-                      justifyContent: "space-between",
                       alignItems: "center",
-                      width: "100%",
+                      borderRadius: 2,
+                      mb: 1,
+                      backgroundColor:
+                        selectedMember?.id === member.id
+                          ? theme.palette.action.selected
+                          : "transparent",
+                      color: theme.palette.text.primary,
+                      "&:hover": {
+                        backgroundColor: theme.palette.action.hover,
+                      },
+                      transition: "background-color 0.3s",
                     }}
                   >
-                    <Box>
-                      <Typography variant="body1" fontWeight="500">
-                        {member.firstname} {member.lastname}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {member.username}
-                      </Typography>
-                    </Box>
-
-                    {unreadCounts[member.userid] > 0 && (
-                      <Box
-                        sx={{
-                          backgroundColor: "#CD5C5C",
-                          color: "white",
-                          borderRadius: "12px",
-                          px: 1,
-                          minWidth: 22,
-                          height: 22,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "0.75rem",
-                          fontWeight: 400,
-                          boxShadow: 1,
-                          animation: "bounce 0.4s ease",
-                          '@keyframes bounce': {
-                            '0%': { transform: 'scale(0.8)' },
-                            '50%': { transform: 'scale(1.1)' },
-                            '100%': { transform: 'scale(1)' },
-                          },
-                        }}
-                      >
-                        {unreadCounts[member.userid] > 4 ? "4+" : unreadCounts[member.userid]}
+                    <Avatar 
+                        src={member.profilephoto} 
+                        sx={{ mr: 2 }} 
+                        onClick={(e) => {
+                          e.stopPropagation(); 
+                          handleOpenPhotoModal(member.profilephoto);
+                        }} 
+                      />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        width: "100%",
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body1" fontWeight="500">
+                          {member.firstname} {member.lastname}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {member.username}
+                        </Typography>
                       </Box>
-                    )}
-
-                  </Box>
-
-                </ListItem>
-              ))}
-        </List>
+  
+                      {unreadCounts[member.userid] > 0 && (
+                        <Box
+                          sx={{
+                            backgroundColor: "#CD5C5C",
+                            color: "white",
+                            borderRadius: "12px",
+                            px: 1,
+                            minWidth: 22,
+                            height: 22,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "0.75rem",
+                            fontWeight: 400,
+                            boxShadow: 1,
+                            animation: "bounce 0.4s ease",
+                            '@keyframes bounce': {
+                              '0%': { transform: 'scale(0.8)' },
+                              '50%': { transform: 'scale(1.1)' },
+                              '100%': { transform: 'scale(1)' },
+                            },
+                          }}
+                        >
+                          {unreadCounts[member.userid] > 4 ? "4+" : unreadCounts[member.userid]}
+                        </Box>
+                      )}
+  
+                    </Box>
+                  </ListItem>
+                ))}
+          </List>
+        )}
       </Box>
-
+  
       <Snackbar open={toastOpen} autoHideDuration={3000} onClose={() => setToastOpen(false)}>
         <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: "100%" }}>
           {toastMsg}
         </Alert>
       </Snackbar>
+  
+      <Dialog open={openPhotoModal} onClose={handleClosePhotoModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Not better than you though!</DialogTitle>
+        <DialogContent sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          {selectedPhoto ? (
+            <Avatar src={selectedPhoto} sx={{ width: 200, height: 200 }} />
+          ) : (
+            <CircularProgress size={50} />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePhotoModal} color="primary">Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
