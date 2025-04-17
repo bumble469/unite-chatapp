@@ -11,12 +11,11 @@ import DownloadIcon from "@mui/icons-material/Download";
 import bgimage from "../../../assets/images/bgimage.jpg";
 import bgimagedark from "../../../assets/images/bgimagedark.jpg";
 
-const ChatMessages = ({
-  messages,
-  selectedMember,
-  messageContainerRef,
-  theme,
-}) => {
+const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) => {
+  const isImageFile = (filename) => {
+    return /\.(jpg|jpeg|png|gif|bmp|svg|webp)$/i.test(filename);
+  };
+
   return (
     <Paper
       sx={{
@@ -38,20 +37,20 @@ const ChatMessages = ({
         backgroundBlendMode: "overlay",
 
         "&::-webkit-scrollbar": {
-          width: "10px", 
+          width: "10px",
         },
         "&::-webkit-scrollbar-track": {
-          background: theme.palette.mode === "dark" ? "#333" : "#f0f0f0", 
+          background: theme.palette.mode === "dark" ? "#333" : "#f0f0f0",
           borderRadius: "10px",
         },
         "&::-webkit-scrollbar-thumb": {
-          background: theme.palette.mode === "dark" ? "rgb(207, 207, 207)" : "rgb(125, 125, 125)", 
+          background: theme.palette.mode === "dark" ? "rgb(207, 207, 207)" : "rgb(125, 125, 125)",
           borderRadius: "10px",
-          border: "2px solid transparent", 
+          border: "2px solid transparent",
           backgroundClip: "content-box",
         },
         "&::-webkit-scrollbar-thumb:hover": {
-          background: theme.palette.mode === "dark" ? "#2a8c8d" : "#0056b3", 
+          background: theme.palette.mode === "dark" ? "#2a8c8d" : "#0056b3",
         },
       }}
     >
@@ -80,10 +79,7 @@ const ChatMessages = ({
             const currentDate = msg.timestamp?.substring(0, 10);
             const previousDate =
               index > 0
-                ? messages[selectedMember.userid][index - 1].timestamp?.substring(
-                    0,
-                    10
-                  )
+                ? messages[selectedMember.userid][index - 1].timestamp?.substring(0, 10)
                 : null;
 
             return (
@@ -102,7 +98,7 @@ const ChatMessages = ({
                       textAlign: "center",
                       fontWeight: "bold",
                       boxShadow: 1,
-                      color:"rgb(44, 42, 42)"
+                      color: "rgb(44, 42, 42)",
                     }}
                   >
                     <Typography variant="caption" sx={{ fontWeight: "bold" }}>
@@ -119,13 +115,13 @@ const ChatMessages = ({
                         ? "linear-gradient(135deg,rgb(144, 206, 241) 0%,rgb(85, 184, 245) 100%)"
                         : "linear-gradient(135deg,rgb(214, 211, 211) 0%, #f5f5f5 100%)",
                     color: "#000",
-                    px: 1.3,
-                    py: 1,
+                    px: 1,
+                    py: 0.7,
                     borderRadius: 4,
                     maxWidth: "70%",
                     boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                     position: "relative",
-                    fontSize: "0.95rem",
+                    fontSize: "0.7rem",
                     "&::after": {
                       content: '""',
                       position: "absolute",
@@ -145,7 +141,7 @@ const ChatMessages = ({
                     },
                   }}
                 >
-                  {msg.fileData && msg.fileName ? (
+                  {msg.filedata && msg.filename ? (
                     <Typography
                       variant="body1"
                       sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
@@ -161,35 +157,47 @@ const ChatMessages = ({
                     </Typography>
                   )}
 
-                  {(msg.isFile || msg.fileData) && (
-                    <Tooltip
-                      title={`🗂️ Download ${msg.text || "Attachment"}`}
+                  {/* Image Preview */}
+                  {msg.filedata && isImageFile(msg.filename) && (
+                    <Box
+                      sx={{
+                        width: "100%",
+                        maxHeight: "250px",
+                        overflow: "hidden",
+                        borderRadius: "8px",
+                        mt: 1,
+                      }}
                     >
+                      <img
+                        src={msg.filedata}
+                        alt={msg.filename}
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Box>
+                  )}
+
+                  {(msg.hasattachment || msg.filedata) && (
+                    <Tooltip title={`🗂️ Download ${msg.text || "Attachment"}`}>
                       <IconButton
                         onClick={() => {
                           const link = document.createElement("a");
 
-                          if (msg.isFile && msg.fileData) {
-                            const fileBlob = new Blob([
-                              new Uint8Array(
-                                msg.fileData?.data || msg.fileData
-                              ),
-                            ]);
-                            const fileType =
-                              fileBlob.type || "application/octet-stream";
-                            const fileExtension =
-                              fileType.split("/")[1] || "bin";
-                            const finalFileName =
-                              msg.text || `download.${fileExtension}`;
-                            link.href = msg.fileData;
+                          // Handle file download
+                          if (msg.hasattachment && msg.filedata) {
+                            const fileBlob = new Blob([new Uint8Array(msg.filedata.data)]);
+                            const fileType = fileBlob.type || "application/octet-stream";
+                            const fileExtension = fileType.split("/")[1] || "bin";
+                            const finalFileName = msg.filename || `download.${fileExtension}`;
+                            link.href = msg.filedata;
                             link.download = finalFileName;
-                          } else if (msg.fileData && msg.fileName) {
-                            const fileExtension = msg.fileName.split(".").pop();
-                            const finalFileName =
-                              msg.fileName || `download.${fileExtension}`;
-                            link.href = `data:${
-                              msg.fileType || "application/octet-stream"
-                            };base64,${msg.fileData}`;
+                          } else if (msg.filedata && msg.filename) {
+                            const fileExtension = msg.filename.split(".").pop();
+                            const finalFileName = msg.filename || `download.${fileExtension}`;
+                            link.href = `data:${msg.filetype || "application/octet-stream"};base64,${msg.filedata}`;
                             link.download = finalFileName;
                           }
 
@@ -214,11 +222,11 @@ const ChatMessages = ({
                     }}
                   >
                     {msg.timestamp
-                    ? new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    : ""}
+                      ? new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : ""}
                   </Typography>
                 </Box>
               </React.Fragment>

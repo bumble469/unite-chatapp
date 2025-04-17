@@ -15,7 +15,8 @@ import axios from "axios";
 import ChatMessages from "./Components/chatmessages";
 import ChatHeader from './Components/chatheader';
 import ChatInput from './Components/chatinput';
-import talkinggif from "../../assets/images/talkgif.gif"
+import talkinggif from "../../assets/images/talkgif.gif";
+import { toast } from 'react-toastify';
 const Chat = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -207,46 +208,54 @@ const Chat = () => {
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-  
+
     if (file && selectedMember) {
-      const fileType = file.type;
-  
-      // Supported file types
-      const supportedVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
-      const supportedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml'];
-      const supportedDocumentTypes = [
-        'application/msword',       // .doc
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-        'application/vnd.ms-excel',  // .xls
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-        'application/pdf'           // .pdf
-      ];
-      const supportedZipTypes = ['application/zip', 'application/x-rar-compressed'];
-  
-      // Check for video files
-      if (supportedVideoTypes.includes(fileType)) {
-        const fileUrl = URL.createObjectURL(file); // Video preview URL
-        handleSendMessage(`${file.name} (Video)`, true, file, fileUrl);
-  
-      // Check for image files
-      } else if (supportedImageTypes.includes(fileType)) {
-        const fileUrl = URL.createObjectURL(file); // Image preview URL
-        handleSendMessage(`${file.name} (Image)`, true, file, fileUrl);
-  
-      // Check for document files
-      } else if (supportedDocumentTypes.includes(fileType)) {
-        handleSendMessage(`${file.name} (Document)`, true, file);
-  
-      // Check for zip files
-      } else if (supportedZipTypes.includes(fileType)) {
-        handleSendMessage(`${file.name} (Zip File)`, true, file);
-  
-      } else {
-        console.error("Unsupported file type.");
-      }
+        const fileType = file.type;
+
+        // Supported file types
+        const supportedVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
+        const supportedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml'];
+        const supportedDocumentTypes = [
+            'application/msword',       // .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            'application/vnd.ms-excel',  // .xls
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/pdf'           // .pdf
+        ];
+        const supportedZipTypes = ['application/zip', 'application/x-rar-compressed'];
+        
+        const supportedExecutableTypes = [
+            'application/x-msdownload', 
+            'application/x-msdos-program',
+            'application/x-sh',
+            'application/x-bat', 
+            'application/x-msdos-program', 
+            'application/x-executable', 
+            'application/x-msi',
+        ];
+
+        if (supportedVideoTypes.includes(fileType)) {
+            const fileUrl = URL.createObjectURL(file); // Video preview URL
+            handleSendMessage(`${file.name} (Video)`, true, file, fileUrl);
+
+        } else if (supportedImageTypes.includes(fileType)) {
+            const fileUrl = URL.createObjectURL(file); // Image preview URL
+            handleSendMessage(`${file.name} (Image)`, true, file, fileUrl);
+
+        } else if (supportedDocumentTypes.includes(fileType)) {
+            handleSendMessage(`${file.name} (Document)`, true, file);
+
+        } else if (supportedZipTypes.includes(fileType)) {
+            handleSendMessage(`${file.name} (Zip File)`, true, file);
+
+        } else if (supportedExecutableTypes.includes(fileType)) {
+            handleSendMessage(`${file.name} (Executable File)`, true, file);
+
+        } else {
+            toast.error("Unsupported File Type!")
+        }
     }
-  };
-  
+};
   
   useEffect(() => {
     const lastMessage = messageContainerRef.current?.lastElementChild;
