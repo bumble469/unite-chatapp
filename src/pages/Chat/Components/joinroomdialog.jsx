@@ -6,6 +6,7 @@ import {
   Box, Typography, List, ListItem, ListItemText
 } from '@mui/material';
 import ChatRoomModal from './chatroom';
+import { useTheme } from "@mui/material/styles";
 
 const JoinRoomDialog = ({ open, onClose, socket }) => {
   const [roomType, setRoomType] = useState('public');
@@ -16,7 +17,7 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
   const [chatRoomOpen, setChatRoomOpen] = useState(false);
   const [joinedRoomName, setJoinedRoomName] = useState('');
   const userid = parseInt(localStorage.getItem("userId"));
-
+  const theme = useTheme();
   useEffect(() => {
     const fetchPublicRooms = async () => {
       if (roomType === 'public') {
@@ -94,7 +95,7 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
                       mb: 1,
                       p: 2,
                       '&:hover': {
-                        backgroundColor: '#f0f0f0',
+                        backgroundColor: theme.palette.mode == "dark" ? 'rgb(46, 46, 46)': 'rgb(215, 219, 216)',
                       },
                     }}
                   >
@@ -197,7 +198,6 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
           },
         }}
         roomName={joinedRoomName}
-        socket = {socket}
       />
     </>
   );

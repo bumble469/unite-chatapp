@@ -36,7 +36,7 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
     if (!socket) return;
 
     const handleRoomCreated = (roomData) => {
-      const { roomName, createdBy } = roomData;  // Destructure the received room data
+      const { roomName, createdBy } = roomData; 
       setRoomName(roomName);  
       setCreatedBy(createdBy);
       setIsLoading(false);
@@ -62,8 +62,6 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
     setChatRoomOpen(false);
     onClose();
   };
-
-  const dummyMembers = ['Alice', 'Bob', 'Charlie'];
 
   const defaultTheme = {
     palette: {
@@ -114,11 +112,9 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
       <ChatRoomModal
         open={chatRoomOpen}
         onClose={handleCloseChatRoom}
-        members={dummyMembers}
         theme={defaultTheme}
         roomName={roomName}
         roomDescription={roomDescription}
-        socket = {socket}
         createdBy={createdBy}
       />
     </>
