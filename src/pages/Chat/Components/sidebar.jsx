@@ -19,7 +19,8 @@ import { Add, Cancel } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import io from "socket.io-client";
-import unitelogonobg from '../../../assets/images/unite-logo-nobg.png'
+import unitelogonobg from '../../../assets/images/unite-logo-nobg.png';
+import ChatroomActions from "./chatroomactions.jsx";
 let socketRef = null;
 
 const Sidebar = ({
@@ -231,24 +232,26 @@ const Sidebar = ({
         },
       }}
     >
-      <Typography 
-        variant="h6" 
-        gutterBottom 
-        sx={{ 
-          color: theme.palette.text.primary, 
-          display: 'flex', 
-          alignItems: 'center',
-        }}
-      >
-        <img 
-          src={unitelogonobg} 
-          alt="U" 
-          height={30} 
-          style={{ marginRight:-20,marginTop: 4, height:'4rem'}}
-        />
-        nite
-      </Typography>
-  
+      <Box sx={{display:'flex'}}>
+        <Typography 
+          variant="h6" 
+          gutterBottom 
+          sx={{ 
+            color: theme.palette.text.primary, 
+            display: 'flex', 
+            alignItems: 'center',
+          }}
+        >
+          <img 
+            src={unitelogonobg} 
+            alt="U" 
+            height={30} 
+            style={{ marginRight:-20,marginTop: 4, height:'4rem'}}
+          />
+          nite
+        </Typography>
+        <ChatroomActions socket={socketRef} />
+      </Box>
       <Stack spacing={1} sx={{ mb: 2,px:2 }}>
         {!showAddField ? (
           <Button variant="contained" size="small" onClick={() => setShowAddField(true)}>

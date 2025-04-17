@@ -117,7 +117,7 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
                     color: "#000",
                     px: 1,
                     py: 0.7,
-                    borderRadius: 4,
+                    borderRadius: 2,
                     maxWidth: "70%",
                     boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                     position: "relative",
