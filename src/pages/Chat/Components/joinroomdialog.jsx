@@ -18,19 +18,25 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
   const [joinedRoomName, setJoinedRoomName] = useState('');
   const userid = parseInt(localStorage.getItem("userId"));
   const theme = useTheme();
-  useEffect(() => {
-    const fetchPublicRooms = async () => {
-      if (roomType === 'public') {
-        try {
-          const res = await axios.post('http://localhost:5000/api/rooms/public-rooms');
-          setOpenRooms(res.data.rooms || []);
-        } catch (err) {
-          console.error('Error fetching public rooms:', err);
-        }
+
+  const fetchPublicRooms = async () => {
+    if (roomType === 'public') {
+      try {
+        const res = await axios.post('http://localhost:5000/api/rooms/public-rooms');
+        setOpenRooms(res.data.rooms || []);
+      } catch (err) {
+        console.error('Error fetching public rooms:', err);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchPublicRooms();
   }, [roomType]);
+
+  const handleRefreshRooms = () => {
+    fetchPublicRooms();
+  };
 
   const handleJoinRoom = (room) => {
     if (room?.roomid && userid && socket) {
@@ -82,40 +88,48 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
           </RadioGroup>
 
           {roomType === 'public' ? (
-            <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-              <List>
-                {openRooms.map((room, index) => (
-                  <ListItem
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      borderRadius: 2,
-                      boxShadow: 1,
-                      mb: 1,
-                      p: 2,
-                      '&:hover': {
-                        backgroundColor: theme.palette.mode == "dark" ? 'rgb(46, 46, 46)': 'rgb(215, 219, 216)',
-                      },
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        <>
-                          <Typography variant="caption" color="primary">Public</Typography> {room.chatroomname}
-                        </>
-                      }
-                    />
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleJoinRoom(room)}
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle1">Available Public Rooms</Typography>
+                <Button variant="outlined" size="small" onClick={handleRefreshRooms}>
+                  Refresh
+                </Button>
+              </Box>
+              <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
+                <List>
+                  {openRooms.map((room, index) => (
+                    <ListItem
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderRadius: 2,
+                        boxShadow: 1,
+                        mb: 1,
+                        p: 2,
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === "dark" ? 'rgb(46, 46, 46)' : 'rgb(215, 219, 216)',
+                        },
+                      }}
                     >
-                      Join
-                    </Button>
-                  </ListItem>
-                ))}
-              </List>
+                      <ListItemText
+                        primary={
+                          <>
+                            <Typography variant="caption" color="primary">Public</Typography> {room.chatroomname}
+                          </>
+                        }
+                      />
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleJoinRoom(room)}
+                      >
+                        Join
+                      </Button>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
             </Box>
           ) : (
             <>

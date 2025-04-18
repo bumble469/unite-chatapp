@@ -30,7 +30,6 @@ const ChatroomActions = ({socket}) => {
             minWidth: 'auto',
             width: { xs: '30vw', sm: '3rem', md: '4.5rem', lg: '5.5rem' },
           }}
-          disabled
         >
           Create Room
         </Button>
@@ -46,7 +45,6 @@ const ChatroomActions = ({socket}) => {
             minWidth: 'auto',
             width: { xs: '30vw', sm: '3rem', md: '4.5rem', lg: '5.5rem' },
           }}
-          disabled
         >
           Join Room
         </Button>

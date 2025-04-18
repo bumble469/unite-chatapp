@@ -9,7 +9,7 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
   const [roomType, setRoomType] = useState('public');
   const [isPublic, setIsPublic] = useState(true);
   const [roomName, setRoomName] = useState('');
-  const [roomDescription, setRoomDescription] = useState('');  // State for room description
+  const [roomDescription, setRoomDescription] = useState(''); 
   const [isLoading, setIsLoading] = useState(false);
   const [chatRoomOpen, setChatRoomOpen] = useState(false);
   const userid = parseInt(localStorage.getItem("userId"));
@@ -40,7 +40,8 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
       setRoomName(roomName);  
       setCreatedBy(createdBy);
       setIsLoading(false);
-      setChatRoomOpen(true);  
+      setChatRoomOpen(true);  // Open the chat room modal
+      onClose();  // Close the Create Room modal
     };
 
     const handleRoomError = (errorMessage) => {
@@ -56,7 +57,7 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
       socket.off("roomCreated", handleRoomCreated);
       socket.off("roomError", handleRoomError);
     };
-  }, [socket]);
+  }, [socket, onClose]);
 
   const handleCloseChatRoom = () => {
     setChatRoomOpen(false);

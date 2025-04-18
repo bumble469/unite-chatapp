@@ -17,25 +17,93 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
   const apiUrl = import.meta.env.VITE_API_URL;
   const theme = useTheme();
   const socket = propSocket || io(apiUrl);
-
+  const [file, setFile] = useState(null);
   const isDark = theme.palette.mode === 'dark';
 
   useEffect(() => {
     if (socket) {
       socket.on('onCreateRoomMembers', (members) => setRoomMembers(members));
       socket.on('joinedRoomMembers', (members) => setRoomMembers(members));
-      socket.on('leftRoomMembers', (members) => setRoomMembers(members));;
+      socket.on('leftRoomMembers', (members) => setRoomMembers(members));
     }
-  }, [socket]);
+
+    const handleBeforeUnload = (e) => {
+      if (socket) {
+        if (createdBy === userid) {
+          socket.emit('deleteRoom', roomName, userid);
+          socket.on('deleteRoomResponse', (response) => {
+            if (response.success) {
+              toast.info(`Room deleted: ${response.message}`);
+            } else {
+              toast.error(`Failed to delete room: ${response.message}`);
+            }
+          });
+        } else {
+          socket.emit('leaveRoom', roomName, userid);
+          socket.once('leftRoomResponse', (response) => {
+            if (response.success) {
+              toast.info(`Room left: ${response.message}`);
+            } else {
+              toast.error(`Couldn't leave room: ${response.message}`);
+            }
+          });
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      socket.off('onCreateRoomMembers');
+      socket.off('joinedRoomMembers');
+      socket.off('leftRoomMembers');
+    };
+  }, [socket, roomName, userid, createdBy]);
+
+  const [messages, setMessages] = useState({}); // { roomId: [msg, msg, ...] }
+
+  useEffect(() => {
+    if (!socket) return;
+  
+    socket.on("newRoomMessage", (msg) => {
+      console.log("📥 Received message:", msg);
+  
+      const {
+        roommessageid,
+        senderid,
+        messagetext,
+        sentat,
+        isFile,
+        fileData,
+        roomId,
+      } = msg;
+  
+      const safeText = messagetext || "download.bin";
+  
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        [roomId]: [
+          ...(prevMessages[roomId] || []),
+          {
+            text: safeText,
+            sender: "Other",
+            isFile: !!isFile,
+            fileData: isFile ? fileData : null,
+            fileName: isFile ? safeText : null,
+            sentat,
+          },
+        ],
+      }));
+    });
+  
+    return () => {
+      socket.off("newRoomMessage");
+    };
+  }, []);
+  
 
   const handleMessageChange = (e) => setMessage(e.target.value);
-
-  const handleSendMessage = () => {
-    if (socket && message.trim() !== '') {
-      socket.emit('sendMessage', { roomName, userid, message });
-      setMessage('');
-    }
-  };
 
   const toggleMembersList = () => setIsMembersCollapsed(!isMembersCollapsed);
 
@@ -65,18 +133,49 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
     }
   };
 
+  const handleSendMessage = () => {
+    if (!message && !file) {
+      toast.error('Message cannot be empty');
+      return;
+    }
+  
+    // Construct the message data to be sent
+    const messageData = {
+      roomName,
+      senderId: userid,  // Assuming `userid` is the user sending the message
+      messageText: message,
+      isFile: !!file,
+      fileData: file ? file : null
+    };
+  
+    // Emit the message event to the backend
+    socket.emit('roomSendMessage', messageData);
+  
+    // Optionally, add the message to the local state for instant UI update
+    setMessages((prevMessages) => ({
+      ...prevMessages,
+      [roomName]: [
+        ...(prevMessages[roomName] || []),
+        { senderid: userid, messagetext: message, sentat: new Date().toISOString(), isFile: !!file, fileData: file }
+      ]
+    }));
+  
+    // Reset the message input and file state after sending
+    setMessage('');
+    setFile(null);
+  };
+  
+  
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };  
+  
   const resetState = () => {
     setSelected(false);
     setMessage('');
     setIsMembersCollapsed(false);
     setRoomMembers([]);
-    return () => {
-      socket.off('onCreateRoomMembers');
-      socket.off('joinedRoomMembers');
-      socket.off('leftRoomMembers');
-    }
   };
-
   return (
     <Dialog
       open={open}
@@ -102,7 +201,7 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
           {createdBy === userid ? 'End Room' : 'Leave Room'}
         </Button>
       </DialogTitle>
-
+  
       <DialogContent
         sx={{
           backgroundColor: isDark ? theme.palette.background.default : '#fff',
@@ -137,7 +236,7 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
           {/* Left Section - Members */}
           <Box
             sx={{
-              marginLeft:'-1rem',
+              marginLeft: '-1rem',
               overflowY: 'auto',
               borderRight: `1px solid ${theme.palette.divider}`,
               height: isMembersCollapsed ? 0 : 'auto',
@@ -219,13 +318,21 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
                 mb: 1,
               }}
             >
-              <Typography variant="body2" color="text.secondary">
-                Chat messages will appear here...
-              </Typography>
+              {/* Render the messages here */}
+              {messages[roomName]?.map((msg, index) => (
+                <Box key={index} sx={{ marginBottom: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                    {msg.senderid} {/* You can display sender's name or id here */}
+                  </Typography>
+                  <Typography variant="body1">{msg.messagetext}</Typography>
+                  {msg.isFile && <a href={msg.fileData} target="_blank" rel="noopener noreferrer">Download File</a>}
+                  <Typography variant="caption" color="text.secondary">{new Date(msg.sentat).toLocaleTimeString()}</Typography>
+                </Box>
+              ))}
             </Box>
 
             <Box display="flex" alignItems="center" gap={2} sx={{
-              flexDirection:{xs:'column',md:'row'},
+              flexDirection: { xs: 'column', md: 'row' },
             }}>
               <TextField
                 fullWidth
@@ -239,6 +346,21 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
                   borderRadius: 2,
                 }}
               />
+
+              <input
+                type="file"
+                onChange={handleFileChange}
+                style={{
+                  display: 'none',
+                }}
+                id="file-input"
+              />
+              <label htmlFor="file-input">
+                <Button variant="contained" component="span">
+                  Upload File
+                </Button>
+              </label>
+
               <Button
                 variant="contained"
                 color="primary"
@@ -252,7 +374,7 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
         </Box>
       </DialogContent>
     </Dialog>
-  );
+  );  
 };
 
 export default ChatRoomModal;
