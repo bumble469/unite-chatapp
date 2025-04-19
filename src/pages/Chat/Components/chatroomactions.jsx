@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button } from '@mui/material';
 import CreateRoomDialog from './createroomdialog.jsx';
 import JoinRoomDialog from './joinroomdialog.jsx';
-const ChatroomActions = ({socket}) => {
+const ChatroomActions = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const handleOpenCreateDialog = () => setCreateDialogOpen(true);
@@ -53,10 +53,9 @@ const ChatroomActions = ({socket}) => {
       <CreateRoomDialog
         open={createDialogOpen}
         onClose={handleCloseCreateDialog}
-        socket={socket} 
       />
 
-      <JoinRoomDialog open={joinDialogOpen} onClose={handleCloseJoinDialog} onJoinRoom={handleJoinRoom} socket={socket} />
+      <JoinRoomDialog open={joinDialogOpen} onClose={handleCloseJoinDialog} onJoinRoom={handleJoinRoom} />
     </Box>
   );
 };

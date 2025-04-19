@@ -4,8 +4,9 @@ import {
   Button, Radio, RadioGroup, FormControlLabel, TextField
 } from '@mui/material';
 import ChatRoomModal from './chatroom';
+import { socket } from '../../../socket.jsx';
 
-const CreateRoomDialog = ({ open, onClose, socket }) => {
+const CreateRoomDialog = ({ open, onClose }) => {
   const [roomType, setRoomType] = useState('public');
   const [isPublic, setIsPublic] = useState(true);
   const [roomName, setRoomName] = useState('');
@@ -13,7 +14,9 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [chatRoomOpen, setChatRoomOpen] = useState(false);
   const userid = parseInt(localStorage.getItem("userId"));
+  const [roomid, setRoomId] = useState(null);
   const [createdBy, setCreatedBy] = useState();
+  
   const handleRoomTypeChange = (event) => {
     const selectedType = event.target.value;
     setRoomType(selectedType);
@@ -36,12 +39,13 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
     if (!socket) return;
 
     const handleRoomCreated = (roomData) => {
-      const { roomName, createdBy } = roomData; 
-      setRoomName(roomName);  
+      const { roomid, roomName, createdBy } = roomData;
+      setRoomId(roomid);  // Store roomId
+      setRoomName(roomName);
       setCreatedBy(createdBy);
       setIsLoading(false);
-      setChatRoomOpen(true);  // Open the chat room modal
-      onClose();  // Close the Create Room modal
+      setChatRoomOpen(true);
+      onClose();
     };
 
     const handleRoomError = (errorMessage) => {
@@ -114,8 +118,7 @@ const CreateRoomDialog = ({ open, onClose, socket }) => {
         open={chatRoomOpen}
         onClose={handleCloseChatRoom}
         theme={defaultTheme}
-        roomName={roomName}
-        roomDescription={roomDescription}
+        roomid={roomid}
         createdBy={createdBy}
       />
     </>

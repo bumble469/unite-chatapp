@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import ArrowUpIcon from '@mui/icons-material/ArrowUpward';
 import Sidebar from "./Components/sidebar";
-import { getSocket } from "./Components/sidebar";
+import { socket } from '../../socket.jsx';
 import axios from "axios";
 import ChatMessages from "./Components/chatmessages";
 import ChatHeader from './Components/chatheader';
@@ -20,7 +20,6 @@ import { toast } from 'react-toastify';
 const Chat = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const socket = getSocket();
   const [chatId, setChatId] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
   const [message, setMessage] = useState("");
@@ -29,7 +28,7 @@ const Chat = () => {
   const userId = parseInt(localStorage.getItem("userId"), 10);
   const messageContainerRef = useRef(null); 
   const apiUrl = import.meta.env.VITE_API_URL;
-  
+
   useEffect(() => {
     const fetchFriends = async () => {
       try {

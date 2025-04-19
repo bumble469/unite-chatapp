@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Dialog, DialogActions, DialogContent, DialogTitle, Button,
   List, ListItem, ListItemText, TextField, IconButton,
@@ -6,111 +6,71 @@ import {
 } from '@mui/material';
 import { useTheme } from "@mui/material/styles";
 import { toast } from 'react-toastify';
-import { io } from 'socket.io-client';
-
-const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, socket: propSocket }) => {
+import { socket } from '../../../socket.jsx';
+const ChatRoomModal = ({ open, onClose, roomid }) => {
   const [selected, setSelected] = useState(false);
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
   const [isMembersCollapsed, setIsMembersCollapsed] = useState(false);
   const [roomMembers, setRoomMembers] = useState([]);
-  const userid = parseInt(localStorage.getItem("userId"));
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const theme = useTheme();
-  const socket = propSocket || io(apiUrl);
   const [file, setFile] = useState(null);
+  const [roomName, setRoomName] = useState(null);
+  const [roomDescription, setRoomDescription] = useState(null);
+  const userid = parseInt(localStorage.getItem("userId"));
+  const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-
+  const [createdBy, setCreatedBy] = useState(null);
+  const messageContainerRef = useRef(null);
   useEffect(() => {
-    if (socket) {
-      socket.on('onCreateRoomMembers', (members) => setRoomMembers(members));
-      socket.on('joinedRoomMembers', (members) => setRoomMembers(members));
-      socket.on('leftRoomMembers', (members) => setRoomMembers(members));
-    }
+    socket.once("roomCreated", (data) => {
+      setCreatedBy(data.createdBy);
+      setRoomMembers(data.members);
+      setRoomName(data.roomName);
+      setRoomDescription(data.description)
+    });
 
-    const handleBeforeUnload = (e) => {
-      if (socket) {
-        if (createdBy === userid) {
-          socket.emit('deleteRoom', roomName, userid);
-          socket.on('deleteRoomResponse', (response) => {
-            if (response.success) {
-              toast.info(`Room deleted: ${response.message}`);
-            } else {
-              toast.error(`Failed to delete room: ${response.message}`);
-            }
-          });
-        } else {
-          socket.emit('leaveRoom', roomName, userid);
-          socket.once('leftRoomResponse', (response) => {
-            if (response.success) {
-              toast.info(`Room left: ${response.message}`);
-            } else {
-              toast.error(`Couldn't leave room: ${response.message}`);
-            }
-          });
-        }
+    socket.on("roomInfo", (data) => {
+      setRoomName(data.chatroomname);
+      setRoomDescription(data.description)
+    })
+
+    socket.on("joinedRoomMembers", (members) => {
+      setRoomMembers(members);
+    });
+
+    socket.on("leftRoomMembers", (members) => {
+      setRoomMembers(members);
+    });
+
+    socket.on("receiveRoomMessage", (data) => {
+      setMessages((prevMessages) => [...prevMessages, data]);
+    });
+
+    const handleBeforeUnload = () => {
+      if (createdBy === userid) {
+        handleDeleteRoom();
+      } else {
+        handleLeaveRoom();
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-
+    
     return () => {
+      socket.off("roomCreated");
+      socket.off("joinedRoomMembers");
+      socket.off("leftRoomMembers");
+      socket.off("receiveRoomMessage");
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      socket.off('onCreateRoomMembers');
-      socket.off('joinedRoomMembers');
-      socket.off('leftRoomMembers');
     };
-  }, [socket, roomName, userid, createdBy]);
-
-  const [messages, setMessages] = useState({}); // { roomId: [msg, msg, ...] }
-
-  useEffect(() => {
-    if (!socket) return;
-  
-    socket.on("newRoomMessage", (msg) => {
-      console.log("📥 Received message:", msg);
-  
-      const {
-        roommessageid,
-        senderid,
-        messagetext,
-        sentat,
-        isFile,
-        fileData,
-        roomId,
-      } = msg;
-  
-      const safeText = messagetext || "download.bin";
-  
-      setMessages((prevMessages) => ({
-        ...prevMessages,
-        [roomId]: [
-          ...(prevMessages[roomId] || []),
-          {
-            text: safeText,
-            sender: "Other",
-            isFile: !!isFile,
-            fileData: isFile ? fileData : null,
-            fileName: isFile ? safeText : null,
-            sentat,
-          },
-        ],
-      }));
-    });
-  
-    return () => {
-      socket.off("newRoomMessage");
-    };
-  }, []);
-  
+  }, [createdBy, userid, roomid]);
 
   const handleMessageChange = (e) => setMessage(e.target.value);
 
-  const toggleMembersList = () => setIsMembersCollapsed(!isMembersCollapsed);
-
   const handleDeleteRoom = () => {
     if (socket) {
-      socket.emit('deleteRoom', roomName, userid);
-      socket.on('deleteRoomResponse', (response) => {
+      socket.emit('deleteRoom', roomid, userid);
+      socket.once('deleteRoomResponse', (response) => {
         if (response.success) {
           toast.info(`Delete Response: ${response.message}`);
           onClose();
@@ -124,7 +84,7 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
 
   const handleLeaveRoom = () => {
     if (socket) {
-      socket.emit('leaveRoom', roomName, userid);
+      socket.emit('leaveRoom', roomid, userid);
       socket.once('leftRoomResponse', (response) => {
         response.success
           ? (toast.info(`Room left: ${response.message}`), onClose(), resetState())
@@ -134,48 +94,29 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
   };
 
   const handleSendMessage = () => {
-    if (!message && !file) {
-      toast.error('Message cannot be empty');
-      return;
-    }
-  
-    // Construct the message data to be sent
-    const messageData = {
-      roomName,
-      senderId: userid,  // Assuming `userid` is the user sending the message
-      messageText: message,
-      isFile: !!file,
-      fileData: file ? file : null
-    };
-  
-    // Emit the message event to the backend
-    socket.emit('roomSendMessage', messageData);
-  
-    // Optionally, add the message to the local state for instant UI update
-    setMessages((prevMessages) => ({
-      ...prevMessages,
-      [roomName]: [
-        ...(prevMessages[roomName] || []),
-        { senderid: userid, messagetext: message, sentat: new Date().toISOString(), isFile: !!file, fileData: file }
-      ]
-    }));
-  
-    // Reset the message input and file state after sending
-    setMessage('');
-    setFile(null);
+    if (!message.trim()) return; 
+    socket.emit("sendRoomMessage", roomid, userid, message);
+    setMessage(""); 
   };
-  
-  
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };  
-  
+
+  const handleFileChange = (e) => setFile(e.target.files[0]);
+
   const resetState = () => {
     setSelected(false);
     setMessage('');
     setIsMembersCollapsed(false);
     setRoomMembers([]);
   };
+
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      const lastMessage = messageContainerRef.current?.lastElementChild;
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }// Delay to ensure rendering is complete
+  }, [messages]);  
+
   return (
     <Dialog
       open={open}
@@ -201,14 +142,13 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
           {createdBy === userid ? 'End Room' : 'Leave Room'}
         </Button>
       </DialogTitle>
-  
+
       <DialogContent
         sx={{
           backgroundColor: isDark ? theme.palette.background.default : '#fff',
           color: theme.palette.text.primary,
-          "&::-webkit-scrollbar": {
-            width: "10px",
-          },
+          ref:{messageContainerRef},
+          "&::-webkit-scrollbar": { width: "10px" },
           "&::-webkit-scrollbar-track": {
             background: theme.palette.mode === "dark" ? "#333" : "#f0f0f0",
             borderRadius: "10px",
@@ -242,9 +182,7 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
               height: isMembersCollapsed ? 0 : 'auto',
               paddingBottom: isMembersCollapsed ? 0 : 2,
               transition: 'height 0.3s ease',
-              "&::-webkit-scrollbar": {
-                width: "10px",
-              },
+              "&::-webkit-scrollbar": { width: "10px" },
               "&::-webkit-scrollbar-track": {
                 background: theme.palette.mode === "dark" ? "#333" : "#f0f0f0",
                 borderRadius: "10px",
@@ -261,7 +199,6 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
             }}
           >
             <Typography variant="body1" sx={{ mb: 2 }}>Members</Typography>
-
             {roomMembers.length === 0 ? (
               <Typography variant="body2" color="text.secondary">No members to show</Typography>
             ) : (
@@ -301,71 +238,95 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
             display="flex"
             flexDirection="column"
             justifyContent="space-between"
-            sx={{
-              backgroundColor: isDark ? theme.palette.grey[900] : theme.palette.grey[50],
-              px: 2,
-              pb: 2,
-              borderRadius: 2,
-              boxShadow: 2,
-            }}
+            sx={{ paddingLeft: 2, px: 2, py: 1 }}
           >
             <Box
-              flex={1}
-              sx={{
-                overflowY: 'auto',
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                pb: 1,
-                mb: 1,
-              }}
+              display="flex"
+              flexDirection="column"
+              sx={{ gap: 1, overflowY: 'auto', height: '100%' }}
             >
-              {/* Render the messages here */}
-              {messages[roomName]?.map((msg, index) => (
-                <Box key={index} sx={{ marginBottom: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    {msg.senderid} {/* You can display sender's name or id here */}
-                  </Typography>
-                  <Typography variant="body1">{msg.messagetext}</Typography>
-                  {msg.isFile && <a href={msg.fileData} target="_blank" rel="noopener noreferrer">Download File</a>}
-                  <Typography variant="caption" color="text.secondary">{new Date(msg.sentat).toLocaleTimeString()}</Typography>
-                </Box>
-              ))}
+              {messages.map((msg, index) => {
+                const isOwnMessage = msg.userid === userid;
+                return (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: isOwnMessage ? 'flex-end' : 'flex-start',
+                      mb: 1.5, 
+                      px: 1,
+                    }}
+                  >
+                    <Paper
+                      elevation={3}
+                      sx={{
+                        maxWidth: '70%',
+                        padding: 1.5,
+                        borderRadius: 3,
+                        backgroundColor: isOwnMessage
+                          ? theme.palette.primary.main
+                          : isDark
+                          ? theme.palette.grey[800]
+                          : theme.palette.grey[200],
+                        color: isOwnMessage ? '#fff' : theme.palette.text.primary,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          fontWeight: 'bold',
+                          color: isOwnMessage ? '#e0e0e0' : theme.palette.text.secondary,
+                          mb: 0.5,
+                          fontSize:"0.7rem"
+                        }}
+                      >
+                        {msg.username}
+                      </Typography>
+                      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                        {msg.message}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          textAlign: 'right',
+                          mt: 0.5,
+                          fontSize: '0.75rem',
+                          opacity: 0.7,
+                        }}
+                      >
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Typography>
+                    </Paper>
+                  </Box>
+                );
+              })}
+
             </Box>
 
-            <Box display="flex" alignItems="center" gap={2} sx={{
-              flexDirection: { xs: 'column', md: 'row' },
-            }}>
+            {/* Send Message Section */}
+            <Box display="flex" alignItems="center" mt={2}>
               <TextField
-                fullWidth
-                variant="outlined"
                 value={message}
                 onChange={handleMessageChange}
-                placeholder="Type a message"
-                sx={{
-                  input: { color: theme.palette.text.primary },
-                  backgroundColor: isDark ? theme.palette.grey[800] : '#fff',
-                  borderRadius: 2,
-                }}
+                label="Type a message"
+                fullWidth
+                multiline
+                maxRows={4}
               />
-
-              <input
-                type="file"
-                onChange={handleFileChange}
-                style={{
-                  display: 'none',
-                }}
-                id="file-input"
-              />
-              <label htmlFor="file-input">
-                <Button variant="contained" component="span">
-                  Upload File
-                </Button>
-              </label>
-
               <Button
-                variant="contained"
-                color="primary"
                 onClick={handleSendMessage}
-                sx={{ px: 4 }}
+                sx={{
+                  backgroundColor: theme.palette.primary.main,
+                  color: '#fff',
+                  ml: 1,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.dark,
+                  },
+                }}
               >
                 Send
               </Button>
@@ -374,7 +335,7 @@ const ChatRoomModal = ({ open, onClose, roomName, roomDescription, createdBy, so
         </Box>
       </DialogContent>
     </Dialog>
-  );  
+  );
 };
 
 export default ChatRoomModal;

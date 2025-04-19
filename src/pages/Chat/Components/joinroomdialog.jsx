@@ -7,8 +7,8 @@ import {
 } from '@mui/material';
 import ChatRoomModal from './chatroom';
 import { useTheme } from "@mui/material/styles";
-
-const JoinRoomDialog = ({ open, onClose, socket }) => {
+import {socket} from '../../../socket.jsx';
+const JoinRoomDialog = ({ open, onClose}) => {
   const [roomType, setRoomType] = useState('public');
   const [roomName, setRoomName] = useState('');
   const [openRooms, setOpenRooms] = useState([]);
@@ -18,11 +18,13 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
   const [joinedRoomName, setJoinedRoomName] = useState('');
   const userid = parseInt(localStorage.getItem("userId"));
   const theme = useTheme();
+  const [joinedRoomId, setJoinedRoomId] = useState(null);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const fetchPublicRooms = async () => {
     if (roomType === 'public') {
       try {
-        const res = await axios.post('http://localhost:5000/api/rooms/public-rooms');
+        const res = await axios.post(`${apiUrl}/api/rooms/public-rooms`);
         setOpenRooms(res.data.rooms || []);
       } catch (err) {
         console.error('Error fetching public rooms:', err);
@@ -41,6 +43,7 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
   const handleJoinRoom = (room) => {
     if (room?.roomid && userid && socket) {
       socket.emit('joinRoom', room.roomid, userid);
+      setJoinedRoomId(room.roomid)
       setJoinedRoomName(room.chatroomname);
       setChatRoomOpen(true);
       onClose();
@@ -49,7 +52,7 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
 
   const handlePrivateRoomSearch = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/api/rooms/private-rooms', {
+      const res = await axios.post(`${apiUrl}/api/rooms/private-rooms`, {
         roomName
       });
 
@@ -202,7 +205,6 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
       <ChatRoomModal
         open={chatRoomOpen}
         onClose={handleCloseChatRoom}
-        members={['Alice', 'Bob', 'Charlie']}
         theme={{
           palette: {
             background: { default: '#f5f5f5', paper: '#fff' },
@@ -211,7 +213,7 @@ const JoinRoomDialog = ({ open, onClose, socket }) => {
             divider: '#e0e0e0',
           },
         }}
-        roomName={joinedRoomName}
+        roomid = {joinedRoomId}
       />
     </>
   );

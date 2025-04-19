@@ -18,10 +18,9 @@ import {
 import { Add, Cancel } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
-import io from "socket.io-client";
 import unitelogonobg from '../../../assets/images/unite-logo-nobg.png';
 import ChatroomActions from "./chatroomactions.jsx";
-let socketRef = null;
+import { socket } from '../../../socket.jsx'; 
 
 const Sidebar = ({
   members,
@@ -45,15 +44,7 @@ const Sidebar = ({
   const [selectedPhoto, setSelectedPhoto] = useState("");
 
   useEffect(() => {
-    if (!socketRef) {
-      socketRef = io(`${apiUrl}`);
-
-      socketRef.on("connect", () => {
-        console.log("Socket connected:", socketRef.id);
-        socketRef.emit("join", userId);
-      });
-
-      socketRef.on("newMessage", (data) => {
+      socket.on("newMessage", (data) => {
         if (data.receiverId === userId) {
           setUnreadCounts((prev) => ({
             ...prev,
@@ -62,30 +53,22 @@ const Sidebar = ({
         }
       });
 
-      socketRef.on("chatCreated", (data) => {
+      socket.on("chatCreated", (data) => {
         const { chatId } = data;
         console.log("Chat ID received:", chatId);
         setChatId(chatId);
       });
-    }
-
-    return () => {
-      if (socketRef) {
-        socketRef.disconnect();
-        socketRef = null;
-      }
-    };
   }, []);
 
   useEffect(() => {
     if (members && members.length > 0) {
       const friendIds = members.map(member => member.userid);
-      socketRef.emit("getUnreadCounts", { 
+      socket.emit("getUnreadCounts", { 
         userId, 
         friendIds
       });
 
-      socketRef.on("unreadCounts", (data) => {
+      socket.on("unreadCounts", (data) => {
         const unreadCounts = data;
         for (const [senderId, unreadCount] of Object.entries(unreadCounts)) {
           setUnreadCounts((prev) => ({
@@ -96,7 +79,7 @@ const Sidebar = ({
       });
 
       return () => {
-        socketRef.off("unreadCounts");
+        socket.off("unreadCounts");
       };
     }
   }, [members]);
@@ -173,9 +156,9 @@ const Sidebar = ({
     onSelect(member);   
     const userId = parseInt(localStorage.getItem("userId"), 10);
 
-    if (socketRef) {
+    if (socket) {
       const receiverId = member.userid;
-      socketRef.emit("startChat", {
+      socket.emit("startChat", {
         senderId: userId,
         receiverId: receiverId,
       });
@@ -250,7 +233,7 @@ const Sidebar = ({
           />
           nite
         </Typography>
-        <ChatroomActions socket={socketRef} />
+        <ChatroomActions/>
       </Box>
       <Stack spacing={1} sx={{ mb: 2,px:2 }}>
         {!showAddField ? (
@@ -416,7 +399,5 @@ const Sidebar = ({
     </Box>
   );
 };
-
-export const getSocket = () => socketRef;
 
 export default Sidebar;
