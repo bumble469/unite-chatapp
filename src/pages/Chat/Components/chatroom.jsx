@@ -2,11 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   Dialog, DialogActions, DialogContent, DialogTitle, Button,
   List, ListItem, ListItemText, TextField, IconButton,
-  Box, Typography, Avatar, Paper
+  Box, Typography, Avatar, Paper, Divider
 } from '@mui/material';
+import { Send as SendIcon } from '@mui/icons-material';
 import { useTheme } from "@mui/material/styles";
 import { toast } from 'react-toastify';
 import { socket } from '../../../socket.jsx';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 const ChatRoomModal = ({ open, onClose, roomid }) => {
   const [selected, setSelected] = useState(false);
   const [message, setMessage] = useState('');
@@ -21,6 +24,8 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
   const isDark = theme.palette.mode === 'dark';
   const [createdBy, setCreatedBy] = useState(null);
   const messageContainerRef = useRef(null);
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   useEffect(() => {
     socket.once("roomCreated", (data) => {
       setCreatedBy(data.createdBy);
@@ -133,11 +138,11 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
           color: theme.palette.text.primary,
         }}
       >
-        <Typography variant="body1" sx={{ mb: 1 }}>{roomName}</Typography>
+        <Typography variant="body1" sx={{ mb: 1, fontSize:{xs:'0.8rem', md:'1rem'} }}>{roomName}</Typography>
         <Typography variant="caption" color="text.secondary">Description: {roomDescription}</Typography>
         <Button
           onClick={createdBy === userid ? handleDeleteRoom : handleLeaveRoom}
-          sx={{ position: 'absolute', top: 8, right: 8 }}
+          sx={{ position: 'absolute', top: 8, right: 8, fontSize:{xs:'0.7rem', md:'0.9rem'} }}
         >
           {createdBy === userid ? 'End Room' : 'Leave Room'}
         </Button>
@@ -148,6 +153,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
           backgroundColor: isDark ? theme.palette.background.default : '#fff',
           color: theme.palette.text.primary,
           ref:{messageContainerRef},
+          pr: { xs: 0, sm: 2 },
           "&::-webkit-scrollbar": { width: "10px" },
           "&::-webkit-scrollbar-track": {
             background: theme.palette.mode === "dark" ? "#333" : "#f0f0f0",
@@ -170,13 +176,13 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
             flexDirection: { xs: 'column', sm: 'column', md: 'row' },
             gap: 1,
             height: { xs: '85vh', sm: '70vh' },
-            padding: 1,
           }}
         >
           {/* Left Section - Members */}
           <Box
             sx={{
-              marginLeft: '-1rem',
+              marginLeft: '-0.8rem',
+              marginTop:1,
               overflowY: 'auto',
               borderRight: `1px solid ${theme.palette.divider}`,
               height: isMembersCollapsed ? 0 : 'auto',
@@ -238,7 +244,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
             display="flex"
             flexDirection="column"
             justifyContent="space-between"
-            sx={{ paddingLeft: 2, px: 2, py: 1 }}
+            marginLeft={isMobile?"-1rem":""}
           >
             <Box
               display="flex"
@@ -261,13 +267,13 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
                       elevation={3}
                       sx={{
                         maxWidth: '70%',
-                        padding: 1.5,
-                        borderRadius: 3,
-                        backgroundColor: isOwnMessage
-                          ? theme.palette.primary.main
+                        padding: 1,
+                        borderRadius: 1.5,
+                        background: isOwnMessage
+                          ? "linear-gradient(135deg, rgb(36, 136, 194) 0%, hsl(203, 86.40%, 40.40%) 100%)"
                           : isDark
                           ? theme.palette.grey[800]
-                          : theme.palette.grey[200],
+                          : "linear-gradient(135deg, rgb(214, 211, 211) 0%, #f5f5f5 100%)",
                         color: isOwnMessage ? '#fff' : theme.palette.text.primary,
                       }}
                     >
@@ -304,18 +310,25 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
                   </Box>
                 );
               })}
+            <Divider
+  sx={{
+    display: { xs: 'block', md: 'none' }, // Only show on mobile
+    mt: 2,
+    mb: 1,
+    borderColor: theme.palette.divider
+  }}
+/>
 
             </Box>
-
             {/* Send Message Section */}
             <Box display="flex" alignItems="center" mt={2}>
               <TextField
                 value={message}
                 onChange={handleMessageChange}
                 label="Type a message"
-                fullWidth
                 multiline
                 maxRows={4}
+                sx={{ width: '100%', gap: 1 }}
               />
               <Button
                 onClick={handleSendMessage}
@@ -323,13 +336,18 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
                   backgroundColor: theme.palette.primary.main,
                   color: '#fff',
                   ml: 1,
+                  padding: 0.5,  
+                  minWidth: 'auto', 
+                  width: 'auto', 
+                  height: 'auto', 
                   '&:hover': {
                     backgroundColor: theme.palette.primary.dark,
                   },
                 }}
               >
-                Send
+                <SendIcon sx={{ fontSize: '1.2rem' }} /> {/* Adjust icon size for compactness */}
               </Button>
+
             </Box>
           </Box>
         </Box>

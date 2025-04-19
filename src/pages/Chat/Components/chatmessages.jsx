@@ -26,14 +26,14 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
         flexDirection: "column",
         backgroundImage:
           theme.palette.mode === "dark"
-            ? `linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.6)), url(${bgimagedark})`
+            ? `linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.6)), url(${bgimagedark})`
             : `url(${bgimage})`,
         backgroundRepeat: "repeat",
         backgroundSize: "contain",
         backgroundColor:
           theme.palette.mode === "dark"
-            ? "rgba(49, 49, 49, 0.9)"
-            : "rgba(255, 255, 255, 0.97)",
+            ? "rgba(130, 130, 130, 0.95)"
+            : "rgba(255, 255, 255, 0.7)",
         backgroundBlendMode: "overlay",
 
         "&::-webkit-scrollbar": {
