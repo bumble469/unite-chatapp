@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Paper,
@@ -15,7 +15,6 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
   const isImageFile = (filename) => {
     return /\.(jpg|jpeg|png|gif|bmp|svg|webp)$/i.test(filename);
   };
-
   return (
     <Paper
       sx={{

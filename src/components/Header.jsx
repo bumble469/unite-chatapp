@@ -30,7 +30,7 @@ const Header = ({ mode, setMode }) => {
   const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
   const [requests, setRequests] = useState([]);
   const location = useLocation();
-  const userId = localStorage.getItem('userId');
+  const userId = parseInt(localStorage.getItem('userId'));
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {

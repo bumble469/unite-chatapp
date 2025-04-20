@@ -80,7 +80,7 @@ const Chat = () => {
       
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.userid]: messagesData,
+          [selectedMember?.userid]: messagesData,
         }));
       
       } catch (err) {
@@ -93,10 +93,10 @@ const Chat = () => {
 
   const handleSelectMember = (member) => {
     setSelectedMember(member);  
-    if (!messages[member.userid]) {
+    if (!messages[member?.userid]) {
       setMessages((prev) => ({
         ...prev,
-        [member.userid]: [],
+        [member?.userid]: [],
       }));
     }
   };
@@ -104,11 +104,10 @@ const Chat = () => {
   useEffect(() => {
     if (!socket || !selectedMember) return;
     socket.emit('markMessagesAsRead', {
-      senderId: selectedMember.userid, 
+      senderId: selectedMember?.userid, 
       receiverId: userId,  
     });
   }, [messages, socket, selectedMember]);
-  
   
   const handleSendMessage = (text, isFile = false, file = null) => {
     if (selectedMember && text.trim() && socket) {
@@ -116,7 +115,7 @@ const Chat = () => {
       const newMessage = {
         text,
         senderId: userId,
-        receiverId: selectedMember.userid,
+        receiverId: selectedMember?.userid,
         isFile,
         timestamp: localTimestamp,
         chatId: chatId,
@@ -133,8 +132,8 @@ const Chat = () => {
 
           setMessages((prev) => ({
             ...prev,
-            [selectedMember.userid]: [
-              ...prev[selectedMember.userid],
+            [selectedMember?.userid]: [
+              ...prev[selectedMember?.userid],
               { text: `${file.name}`, sender: "You", isFile, filedata: fileData, timestamp: localTimestamp },
             ],
           }));
@@ -147,8 +146,8 @@ const Chat = () => {
 
         setMessages((prev) => ({
           ...prev,
-          [selectedMember.userid]: [
-            ...prev[selectedMember.userid],
+          [selectedMember?.userid]: [
+            ...prev[selectedMember?.userid],
             { text, sender: "You", isFile, timestamp:localTimestamp },
           ],
         }));
@@ -170,12 +169,11 @@ const Chat = () => {
       } = msg;
       if (isFile && fileData) {
         const base64Data = fileData;
-  
         setMessages((prevMessages) => {
           const updatedMessages = {
             ...prevMessages,
-            [selectedMember.userid]: [
-              ...(prevMessages[selectedMember.userid] || []),
+            [selectedMember?.userid]: [
+              ...(prevMessages[selectedMember?.userid] || []),
               {
                 text,
                 sender: "Other",
@@ -203,7 +201,6 @@ const Chat = () => {
         }
       }
     });
-  
     return () => {
       socket.off("receiveMessage");
     };
@@ -215,7 +212,6 @@ const Chat = () => {
     if (file && selectedMember) {
         const fileType = file.type;
 
-        // Supported file types
         const supportedVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
         const supportedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml'];
         const supportedDocumentTypes = [

@@ -55,7 +55,6 @@ const Sidebar = ({
 
       socket.on("chatCreated", (data) => {
         const { chatId } = data;
-        console.log("Chat ID received:", chatId);
         setChatId(chatId);
       });
   }, []);
