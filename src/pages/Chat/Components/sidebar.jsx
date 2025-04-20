@@ -62,13 +62,7 @@ const Sidebar = ({
 
   useEffect(() => {
     if (members && members.length > 0) {
-      const friendIds = members.map(member => member.userid);
-      socket.emit("getUnreadCounts", { 
-        userId, 
-        friendIds
-      });
-
-      socket.on("unreadCounts", (data) => {
+      socket.on("updateUnreadCounts", (data) => {
         const unreadCounts = data;
         for (const [senderId, unreadCount] of Object.entries(unreadCounts)) {
           setUnreadCounts((prev) => ({
@@ -79,7 +73,7 @@ const Sidebar = ({
       });
 
       return () => {
-        socket.off("unreadCounts");
+        socket.off("updateUnreadCounts");
       };
     }
   }, [members]);

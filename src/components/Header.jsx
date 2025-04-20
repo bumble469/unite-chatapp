@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IconButton,
   Box,
@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   Button,
+  Badge,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -20,13 +21,31 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import RequestModal from '../components/FriendRequests';
 import ProfileModal from '../components/ProfileAccount';
+import axios from 'axios';
 
 const Header = ({ mode, setMode }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
+  const [requests, setRequests] = useState([]);
   const location = useLocation();
+  const userId = localStorage.getItem('userId');
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/api/chat/requests/pending/${userId}`);
+        setRequests(res.data.pendingRequests);
+      } catch (err) {
+        console.error('Error fetching requests:', err.message);
+        setRequests([]);
+      }
+    };
+
+    if (userId) fetchRequests();
+  }, [userId]);
 
   const toggleTheme = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
@@ -78,7 +97,7 @@ const Header = ({ mode, setMode }) => {
       lg: 'scale(1.05)',
       xl: 'scale(1.1)',
     },
-  };  
+  };
 
   return (
     <>
@@ -107,7 +126,14 @@ const Header = ({ mode, setMode }) => {
           <>
             <Tooltip title="Notifications">
               <IconButton color="inherit" onClick={handleNotificationsClick}>
-                <NotificationsIcon sx={iconScale} />
+                <Badge
+                  color="error"
+                  variant="dot"
+                  overlap="circular"
+                  invisible={requests.length === 0}
+                >
+                  <NotificationsIcon sx={iconScale} />
+                </Badge>
               </IconButton>
             </Tooltip>
 

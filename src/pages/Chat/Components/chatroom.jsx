@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  Dialog, DialogActions, DialogContent, DialogTitle, Button,
-  List, ListItem, ListItemText, TextField, IconButton,
+  Dialog, DialogContent, DialogTitle, Button, ListItem, TextField,
   Box, Typography, Avatar, Paper, Divider
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
@@ -21,8 +20,20 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [createdBy, setCreatedBy] = useState(null);
-  const messageContainerRef = useRef(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const messageContainerRef = useRef(null); 
+
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (open) {
+      setMessages([]);
+    }
+  }, [roomid, open]);  
 
   useEffect(() => {
     socket.once("roomCreated", (data) => {
@@ -75,7 +86,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
       socket.emit('deleteRoom', roomid, userid);
       socket.once('deleteRoomResponse', (response) => {
         if (response.success) {
-          toast.info(`Delete Response: ${response.message}`);
+          toast.info(`Room Ended!`);
           onClose();
           resetState();
         } else {
@@ -90,8 +101,8 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
       socket.emit('leaveRoom', roomid, userid);
       socket.once('leftRoomResponse', (response) => {
         response.success
-          ? (toast.info(`Room left: ${response.message}`), onClose())
-          : toast.error(`Couldn't leave room: ${response.message}`);
+          ? (toast.info(`Room left!`), onClose())
+          : toast.error(`Couldn't leave room!`);
       });
     }
   };
@@ -111,15 +122,6 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
     setRoomDescription(null);
     setCreatedBy(null);
   };
-
-  useEffect(() => {
-    if (messageContainerRef.current) {
-      const lastMessage = messageContainerRef.current?.lastElementChild;
-      if (lastMessage) {
-        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }
-    }// Delay to ensure rendering is complete
-  }, [messages]);  
 
   return (
     <Dialog
@@ -148,10 +150,10 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
       </DialogTitle>
 
       <DialogContent
+        ref={messageContainerRef}
         sx={{
           backgroundColor: isDark ? theme.palette.background.default : '#fff',
           color: theme.palette.text.primary,
-          ref:{messageContainerRef},
           pr: { xs: 0, sm: 2 },
           "&::-webkit-scrollbar": { width: "10px" },
           "&::-webkit-scrollbar-track": {
@@ -236,7 +238,14 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
               </Box>
             )}
           </Box>
-
+          <Divider
+            sx={{
+              display: { xs: 'block', md: 'none' }, // Only show on mobile
+              mt: 2,
+              mb: 1,
+              borderColor: theme.palette.divider
+            }}
+          />
           {/* Right Section - Chat */}
           <Box
             flex={3}
@@ -249,6 +258,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
               display="flex"
               flexDirection="column"
               sx={{ gap: 1, overflowY: 'auto', height: '100%' }}
+              ref={messageContainerRef}
             >
               {messages.map((msg, index) => {
                 const isOwnMessage = msg.userid === userid;
@@ -309,14 +319,6 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
                   </Box>
                 );
               })}
-            <Divider
-  sx={{
-    display: { xs: 'block', md: 'none' }, // Only show on mobile
-    mt: 2,
-    mb: 1,
-    borderColor: theme.palette.divider
-  }}
-/>
 
             </Box>
             {/* Send Message Section */}

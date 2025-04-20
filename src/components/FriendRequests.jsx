@@ -43,7 +43,6 @@ const FriendRequests = ({ open, onClose }) => {
     const fetchRequests = async () => {
       try {
         const res = await axios.get(`${apiUrl}/api/chat/requests/pending/${userId}`);
-        console.log("Fetched requests:", res.data);
 
         setRequests(res.data.pendingRequests || []);
       } catch (err) {

@@ -99,11 +99,16 @@ const Chat = () => {
         [member.userid]: [],
       }));
     }
+  };
+
+  useEffect(() => {
+    if (!socket || !selectedMember) return;
     socket.emit('markMessagesAsRead', {
-      senderId: member.userid, 
+      senderId: selectedMember.userid, 
       receiverId: userId,  
     });
-  };
+  }, [messages, socket, selectedMember]);
+  
   
   const handleSendMessage = (text, isFile = false, file = null) => {
     if (selectedMember && text.trim() && socket) {
@@ -155,7 +160,6 @@ const Chat = () => {
   useEffect(() => {
     if (!socket) return;
     socket.on("receiveMessage", (msg) => {
-      console.log("Received message:", msg);
       const {
         senderId,
         text,
