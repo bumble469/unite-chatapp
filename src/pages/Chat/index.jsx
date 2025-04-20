@@ -177,8 +177,8 @@ const Chat = () => {
                 text,
                 sender: "Other",
                 isFile: true,
-                fileData: base64Data,
-                fileName: text || "download.bin",
+                filedata: base64Data,
+                filename: text || "download.bin",
               },
             ],
           };
