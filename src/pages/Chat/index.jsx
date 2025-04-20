@@ -93,10 +93,10 @@ const Chat = () => {
 
   const handleSelectMember = (member) => {
     setSelectedMember(member);  
-    if (!messages[member.id]) {
+    if (!messages[member.userid]) {
       setMessages((prev) => ({
         ...prev,
-        [member.id]: [],
+        [member.userid]: [],
       }));
     }
     socket.emit('markMessagesAsRead', {
@@ -185,7 +185,7 @@ const Chat = () => {
           return updatedMessages;
         });
       } else {
-        if (selectedMember?.id === senderId || chatId === newChatId) {
+        if (selectedMember?.userid === senderId || chatId === newChatId) {
           setMessages((prevMessages) => {
             const updatedMessages = {
               ...prevMessages,
