@@ -46,6 +46,7 @@ const JoinRoomDialog = ({ open, onClose}) => {
       setJoinedRoomId(room.roomid)
       setJoinedRoomName(room.chatroomname);
       setChatRoomOpen(true);
+      setOpenRooms([]);
       onClose();
     }
   };

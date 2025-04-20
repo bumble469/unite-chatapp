@@ -11,12 +11,10 @@ import { socket } from '../../../socket.jsx';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 const ChatRoomModal = ({ open, onClose, roomid }) => {
-  const [selected, setSelected] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [isMembersCollapsed, setIsMembersCollapsed] = useState(false);
   const [roomMembers, setRoomMembers] = useState([]);
-  const [file, setFile] = useState(null);
   const [roomName, setRoomName] = useState(null);
   const [roomDescription, setRoomDescription] = useState(null);
   const userid = parseInt(localStorage.getItem("userId"));
@@ -92,7 +90,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
       socket.emit('leaveRoom', roomid, userid);
       socket.once('leftRoomResponse', (response) => {
         response.success
-          ? (toast.info(`Room left: ${response.message}`), onClose(), resetState())
+          ? (toast.info(`Room left: ${response.message}`), onClose())
           : toast.error(`Couldn't leave room: ${response.message}`);
       });
     }
@@ -104,13 +102,14 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
     setMessage(""); 
   };
 
-  const handleFileChange = (e) => setFile(e.target.files[0]);
-
   const resetState = () => {
-    setSelected(false);
+    setMessage([])
     setMessage('');
     setIsMembersCollapsed(false);
     setRoomMembers([]);
+    setRoomName(null);
+    setRoomDescription(null);
+    setCreatedBy(null);
   };
 
   useEffect(() => {
@@ -178,13 +177,13 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
             height: { xs: '85vh', sm: '70vh' },
           }}
         >
-          {/* Left Section - Members */}
           <Box
             sx={{
               marginLeft: '-0.8rem',
               marginTop:1,
               overflowY: 'auto',
               borderRight: `1px solid ${theme.palette.divider}`,
+              minHeight: isMobile ? '200px' : '300px',
               height: isMembersCollapsed ? 0 : 'auto',
               paddingBottom: isMembersCollapsed ? 0 : 2,
               transition: 'height 0.3s ease',

@@ -106,13 +106,14 @@ const Chat = () => {
   };
   
   const handleSendMessage = (text, isFile = false, file = null) => {
-    if (selectedMember && text.trim()) {
+    if (selectedMember && text.trim() && socket) {
+      const localTimestamp = new Date().toLocaleString();
       const newMessage = {
         text,
         senderId: userId,
         receiverId: selectedMember.userid,
         isFile,
-        timestamp: Date.now(),
+        timestamp: localTimestamp,
         chatId: chatId,
       };
 
@@ -129,7 +130,7 @@ const Chat = () => {
             ...prev,
             [selectedMember.userid]: [
               ...prev[selectedMember.userid],
-              { text: `${file.name}`, sender: "You", isFile, filedata: fileData },
+              { text: `${file.name}`, sender: "You", isFile, filedata: fileData, timestamp: localTimestamp },
             ],
           }));
           setMessage("");
@@ -143,7 +144,7 @@ const Chat = () => {
           ...prev,
           [selectedMember.userid]: [
             ...prev[selectedMember.userid],
-            { text, sender: "You", isFile },
+            { text, sender: "You", isFile, timestamp:localTimestamp },
           ],
         }));
         setMessage("");
@@ -153,18 +154,16 @@ const Chat = () => {
 
   useEffect(() => {
     if (!socket) return;
-  
     socket.on("receiveMessage", (msg) => {
       console.log("Received message:", msg);
-  
       const {
         senderId,
         text,
         isFile,
         fileData,   
         chatId: newChatId,
+        timestamp
       } = msg;
-  
       if (isFile && fileData) {
         const base64Data = fileData;
   
@@ -179,6 +178,7 @@ const Chat = () => {
                 isFile: true,
                 filedata: base64Data,
                 filename: text || "download.bin",
+                timestamp
               },
             ],
           };
@@ -191,7 +191,7 @@ const Chat = () => {
               ...prevMessages,
               [selectedMember.userid]: [
                 ...(prevMessages[selectedMember.userid] || []),
-                { text, sender: "Other", isFile: false },
+                { text, sender: "Other", isFile: false, timestamp },
               ],
             };
             return updatedMessages;

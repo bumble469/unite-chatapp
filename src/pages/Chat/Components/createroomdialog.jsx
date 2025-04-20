@@ -32,7 +32,6 @@ const CreateRoomDialog = ({ open, onClose }) => {
       roomDescription: roomDescription, 
     };
     socket.emit("createRoom", data); 
-    console.log("Room description: ", roomDescription);
   };
 
   useEffect(() => {
@@ -45,6 +44,7 @@ const CreateRoomDialog = ({ open, onClose }) => {
       setCreatedBy(createdBy);
       setIsLoading(false);
       setChatRoomOpen(true);
+      setRoomDescription('');
       onClose();
     };
 
