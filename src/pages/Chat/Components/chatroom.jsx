@@ -337,7 +337,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
                   backgroundColor: theme.palette.primary.main,
                   color: '#fff',
                   ml: 1,
-                  padding: 0.5,  
+                  padding: 1,  
                   minWidth: 'auto', 
                   width: 'auto', 
                   height: 'auto', 
@@ -346,7 +346,7 @@ const ChatRoomModal = ({ open, onClose, roomid }) => {
                   },
                 }}
               >
-                <SendIcon sx={{ fontSize: '1.2rem' }} /> {/* Adjust icon size for compactness */}
+                <SendIcon sx={{ width:'1.5rem', height:'2rem' }} /> {/* Adjust icon size for compactness */}
               </Button>
 
             </Box>

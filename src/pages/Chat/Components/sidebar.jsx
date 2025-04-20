@@ -44,20 +44,17 @@ const Sidebar = ({
   const [selectedPhoto, setSelectedPhoto] = useState("");
 
   useEffect(() => {
-      socket.on("newMessage", (data) => {
-        if (data.receiverId === userId) {
-          setUnreadCounts((prev) => ({
-            ...prev,
-            [data.senderId]: (prev[data.senderId] || 0) + 1,
-          }));
-        }
-      });
-
-      socket.on("chatCreated", (data) => {
-        const { chatId } = data;
-        setChatId(chatId);
-      });
-  }, []);
+    const handleChatCreated = (data) => {
+      console.log("Chat ID received:", data.chatId);
+      setChatId(data.chatId);
+    };
+    socket.on("chatCreated", handleChatCreated);
+  
+    return () => {
+      socket.off("chatCreated", handleChatCreated);
+    };
+  }, [userId]);
+  
 
   useEffect(() => {
     if (members && members.length > 0) {

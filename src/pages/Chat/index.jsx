@@ -158,53 +158,52 @@ const Chat = () => {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("receiveMessage", (msg) => {
+  
+    const handleMessage = (msg) => {
       const {
         senderId,
         text,
         isFile,
-        fileData,   
-        chatId: newChatId,
-        timestamp
+        fileData,
+        chatId: incomingChatId,
+        timestamp,
       } = msg;
-      if (isFile && fileData) {
-        const base64Data = fileData;
-        setMessages((prevMessages) => {
-          const updatedMessages = {
-            ...prevMessages,
-            [selectedMember?.userid]: [
-              ...(prevMessages[selectedMember?.userid] || []),
-              {
-                text,
-                sender: "Other",
-                isFile: true,
-                filedata: base64Data,
-                filename: text || "download.bin",
-                timestamp
-              },
-            ],
-          };
-          return updatedMessages;
-        });
-      } else {
-        if (selectedMember?.userid === senderId || chatId === newChatId) {
-          setMessages((prevMessages) => {
-            const updatedMessages = {
-              ...prevMessages,
-              [selectedMember?.userid]: [
-                ...(prevMessages[selectedMember?.userid] || []),
-                { text, sender: "Other", isFile: false, timestamp },
-              ],
+  
+      setMessages((prevMessages) => {
+        const isCurrentChat =
+          selectedMember && selectedMember.userid === senderId;
+  
+        const newMessage = isFile
+          ? {
+              text,
+              sender: "Other",
+              isFile: true,
+              filedata: fileData,
+              filename: text || "download.bin",
+              timestamp,
+            }
+          : {
+              text,
+              sender: "Other",
+              isFile: false,
+              timestamp,
             };
-            return updatedMessages;
-          });
-        }
-      }
-    });
-    return () => {
-      socket.off("receiveMessage");
+  
+        // Append to the correct user's message array
+        return {
+          ...prevMessages,
+          [senderId]: [...(prevMessages[senderId] || []), newMessage],
+        };
+      });
     };
-  }, [socket, selectedMember?.userid, chatId]);    
+  
+    socket.on("receiveMessage", handleMessage);
+  
+    return () => {
+      socket.off("receiveMessage", handleMessage);
+    };
+  }, [selectedMember?.userid]);
+     
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
