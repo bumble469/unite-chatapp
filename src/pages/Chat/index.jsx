@@ -193,8 +193,8 @@ const Chat = () => {
           setMessages((prevMessages) => {
             const updatedMessages = {
               ...prevMessages,
-              [selectedMember.userid]: [
-                ...(prevMessages[selectedMember.userid] || []),
+              [selectedMember?.userid]: [
+                ...(prevMessages[selectedMember?.userid] || []),
                 { text, sender: "Other", isFile: false, timestamp },
               ],
             };
