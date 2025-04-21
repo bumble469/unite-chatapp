@@ -111,7 +111,7 @@ const Chat = () => {
   
   const handleSendMessage = (text, isFile = false, file = null) => {
     if (selectedMember && text.trim() && socket) {
-      const localTimestamp = new Date().toLocaleString();
+      const localTimestamp = new Date().toISOString();
       const newMessage = {
         text,
         senderId: userId,
@@ -158,21 +158,16 @@ const Chat = () => {
 
   useEffect(() => {
     if (!socket) return;
-  
     const handleMessage = (msg) => {
       const {
         senderId,
         text,
         isFile,
         fileData,
-        chatId: incomingChatId,
         timestamp,
       } = msg;
   
-      setMessages((prevMessages) => {
-        const isCurrentChat =
-          selectedMember && selectedMember.userid === senderId;
-  
+      setMessages((prevMessages) => {  
         const newMessage = isFile
           ? {
               text,
@@ -189,7 +184,6 @@ const Chat = () => {
               timestamp,
             };
   
-        // Append to the correct user's message array
         return {
           ...prevMessages,
           [senderId]: [...(prevMessages[senderId] || []), newMessage],
@@ -202,8 +196,7 @@ const Chat = () => {
     return () => {
       socket.off("receiveMessage", handleMessage);
     };
-  }, [selectedMember?.userid]);
-     
+  }, [selectedMember?.userid]);  
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

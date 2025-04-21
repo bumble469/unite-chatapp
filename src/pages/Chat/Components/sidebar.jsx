@@ -45,7 +45,6 @@ const Sidebar = ({
 
   useEffect(() => {
     const handleChatCreated = (data) => {
-      console.log("Chat ID received:", data.chatId);
       setChatId(data.chatId);
     };
     socket.on("chatCreated", handleChatCreated);

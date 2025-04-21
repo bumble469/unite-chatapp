@@ -13,23 +13,20 @@ import { socket } from './socket.jsx';
 function App() {
   const [mode, setMode] = useState("light");
   const userId = parseInt(localStorage.getItem("userId"));
-
   useEffect(() => {
     if (userId && !socket.connected) {
       socket.connect();
 
       socket.on("connect", () => {
         console.log("Socket connected:", socket.id);
-        socket.emit("join", userId); // Emit join event
+        socket.emit("join", userId);
       });
     }
-
-    // Cleanup on unmount (disconnect socket)
     return () => {
       if (socket.connected) {
         socket.disconnect();
       }
-      socket.off("connect"); // Remove event listeners
+      socket.off("connect"); 
     };
   }, [userId]);
 
