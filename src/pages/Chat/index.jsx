@@ -82,7 +82,6 @@ const Chat = () => {
           ...prev,
           [selectedMember?.userid]: messagesData,
         }));
-      
       } catch (err) {
         console.error("Failed to load chat history:", err);
       }      

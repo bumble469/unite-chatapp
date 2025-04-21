@@ -45,6 +45,7 @@ const Sidebar = ({
 
   useEffect(() => {
     const handleChatCreated = (data) => {
+      console.log("Chat created:", data.chatId);
       setChatId(data.chatId);
     };
     socket.on("chatCreated", handleChatCreated);
@@ -143,8 +144,6 @@ const Sidebar = ({
 
   const handleSelectMember = (member) => {
     onSelect(member);   
-    const userId = parseInt(localStorage.getItem("userId"), 10);
-
     if (socket) {
       const receiverId = member.userid;
       socket.emit("startChat", {
