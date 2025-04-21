@@ -220,7 +220,11 @@ const ChatMessages = ({ messages, selectedMember, messageContainerRef, theme }) 
                       fontSize: "0.75rem",
                     }}
                   >
-                    {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                    {msg.timestampRealTime
+                    ? new Date(msg.timestampRealTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                    : msg.timestamp
+                    ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                    : ""}
                   </Typography>
                 </Box>
               </React.Fragment>

@@ -163,7 +163,7 @@ const Chat = () => {
         text,
         isFile,
         fileData,
-        timestamp,
+        timestamp: timestampRealTime,
       } = msg;
   
       setMessages((prevMessages) => {  
@@ -174,13 +174,13 @@ const Chat = () => {
               isFile: true,
               filedata: fileData,
               filename: text || "download.bin",
-              timestamp,
+              timestampRealTime,
             }
           : {
               text,
               sender: "Other",
               isFile: false,
-              timestamp,
+              timestampRealTime,
             };
   
         return {
