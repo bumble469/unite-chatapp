@@ -116,7 +116,7 @@ const Auth = () => {
   
         const data = await res.json();
   
-        if (res.ok) {
+        if (res.status == 200) {
           setEmail("");
           setUsername("");
           setFirstName("");
@@ -129,6 +129,7 @@ const Auth = () => {
           setTempUserId(null);
     
           setIsSignup(!isSignup);
+          toast.success("Signup successful! Please login.");
         } else {
           toast.error(data.message || "Signup failed.");
         }
